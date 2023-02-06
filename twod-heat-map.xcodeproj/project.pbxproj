@@ -1,0 +1,624 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07897252299177F300B81626 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897251299177F300B81626 /* AppDelegate.swift */; };
+		07897254299177F300B81626 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897253299177F300B81626 /* SceneDelegate.swift */; };
+		07897256299177F300B81626 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897255299177F300B81626 /* ViewController.swift */; };
+		07897259299177F300B81626 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07897257299177F300B81626 /* Main.storyboard */; };
+		0789725C299177F300B81626 /* twod_heat_map.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 0789725A299177F300B81626 /* twod_heat_map.xcdatamodeld */; };
+		0789725E299177F500B81626 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0789725D299177F500B81626 /* Assets.xcassets */; };
+		07897261299177F500B81626 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0789725F299177F500B81626 /* LaunchScreen.storyboard */; };
+		0789726C299177F500B81626 /* twod_heat_mapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0789726B299177F500B81626 /* twod_heat_mapTests.swift */; };
+		07897276299177F500B81626 /* twod_heat_mapUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897275299177F500B81626 /* twod_heat_mapUITests.swift */; };
+		07897278299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897277299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		07897268299177F500B81626 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 07897246299177F300B81626 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0789724D299177F300B81626;
+			remoteInfo = "twod-heat-map";
+		};
+		07897272299177F500B81626 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 07897246299177F300B81626 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0789724D299177F300B81626;
+			remoteInfo = "twod-heat-map";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0789724E299177F300B81626 /* twod-heat-map.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "twod-heat-map.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		07897251299177F300B81626 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		07897253299177F300B81626 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		07897255299177F300B81626 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		07897258299177F300B81626 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		0789725B299177F300B81626 /* twod_heat_map.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = twod_heat_map.xcdatamodel; sourceTree = "<group>"; };
+		0789725D299177F500B81626 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		07897260299177F500B81626 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		07897262299177F500B81626 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		07897267299177F500B81626 /* twod-heat-mapTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "twod-heat-mapTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0789726B299177F500B81626 /* twod_heat_mapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = twod_heat_mapTests.swift; sourceTree = "<group>"; };
+		07897271299177F500B81626 /* twod-heat-mapUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "twod-heat-mapUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		07897275299177F500B81626 /* twod_heat_mapUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = twod_heat_mapUITests.swift; sourceTree = "<group>"; };
+		07897277299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = twod_heat_mapUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0789724B299177F300B81626 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		07897264299177F500B81626 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0789726E299177F500B81626 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		07897245299177F300B81626 = {
+			isa = PBXGroup;
+			children = (
+				07897250299177F300B81626 /* twod-heat-map */,
+				0789726A299177F500B81626 /* twod-heat-mapTests */,
+				07897274299177F500B81626 /* twod-heat-mapUITests */,
+				0789724F299177F300B81626 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0789724F299177F300B81626 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0789724E299177F300B81626 /* twod-heat-map.app */,
+				07897267299177F500B81626 /* twod-heat-mapTests.xctest */,
+				07897271299177F500B81626 /* twod-heat-mapUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		07897250299177F300B81626 /* twod-heat-map */ = {
+			isa = PBXGroup;
+			children = (
+				07897251299177F300B81626 /* AppDelegate.swift */,
+				07897253299177F300B81626 /* SceneDelegate.swift */,
+				07897255299177F300B81626 /* ViewController.swift */,
+				07897257299177F300B81626 /* Main.storyboard */,
+				0789725D299177F500B81626 /* Assets.xcassets */,
+				0789725F299177F500B81626 /* LaunchScreen.storyboard */,
+				07897262299177F500B81626 /* Info.plist */,
+				0789725A299177F300B81626 /* twod_heat_map.xcdatamodeld */,
+			);
+			path = "twod-heat-map";
+			sourceTree = "<group>";
+		};
+		0789726A299177F500B81626 /* twod-heat-mapTests */ = {
+			isa = PBXGroup;
+			children = (
+				0789726B299177F500B81626 /* twod_heat_mapTests.swift */,
+			);
+			path = "twod-heat-mapTests";
+			sourceTree = "<group>";
+		};
+		07897274299177F500B81626 /* twod-heat-mapUITests */ = {
+			isa = PBXGroup;
+			children = (
+				07897275299177F500B81626 /* twod_heat_mapUITests.swift */,
+				07897277299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift */,
+			);
+			path = "twod-heat-mapUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0789724D299177F300B81626 /* twod-heat-map */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0789727B299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-map" */;
+			buildPhases = (
+				0789724A299177F300B81626 /* Sources */,
+				0789724B299177F300B81626 /* Frameworks */,
+				0789724C299177F300B81626 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "twod-heat-map";
+			productName = "twod-heat-map";
+			productReference = 0789724E299177F300B81626 /* twod-heat-map.app */;
+			productType = "com.apple.product-type.application";
+		};
+		07897266299177F500B81626 /* twod-heat-mapTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0789727E299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-mapTests" */;
+			buildPhases = (
+				07897263299177F500B81626 /* Sources */,
+				07897264299177F500B81626 /* Frameworks */,
+				07897265299177F500B81626 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				07897269299177F500B81626 /* PBXTargetDependency */,
+			);
+			name = "twod-heat-mapTests";
+			productName = "twod-heat-mapTests";
+			productReference = 07897267299177F500B81626 /* twod-heat-mapTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		07897270299177F500B81626 /* twod-heat-mapUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 07897281299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-mapUITests" */;
+			buildPhases = (
+				0789726D299177F500B81626 /* Sources */,
+				0789726E299177F500B81626 /* Frameworks */,
+				0789726F299177F500B81626 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				07897273299177F500B81626 /* PBXTargetDependency */,
+			);
+			name = "twod-heat-mapUITests";
+			productName = "twod-heat-mapUITests";
+			productReference = 07897271299177F500B81626 /* twod-heat-mapUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		07897246299177F300B81626 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1420;
+				LastUpgradeCheck = 1420;
+				TargetAttributes = {
+					0789724D299177F300B81626 = {
+						CreatedOnToolsVersion = 14.2;
+					};
+					07897266299177F500B81626 = {
+						CreatedOnToolsVersion = 14.2;
+						TestTargetID = 0789724D299177F300B81626;
+					};
+					07897270299177F500B81626 = {
+						CreatedOnToolsVersion = 14.2;
+						TestTargetID = 0789724D299177F300B81626;
+					};
+				};
+			};
+			buildConfigurationList = 07897249299177F300B81626 /* Build configuration list for PBXProject "twod-heat-map" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 07897245299177F300B81626;
+			productRefGroup = 0789724F299177F300B81626 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0789724D299177F300B81626 /* twod-heat-map */,
+				07897266299177F500B81626 /* twod-heat-mapTests */,
+				07897270299177F500B81626 /* twod-heat-mapUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0789724C299177F300B81626 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07897261299177F500B81626 /* LaunchScreen.storyboard in Resources */,
+				0789725E299177F500B81626 /* Assets.xcassets in Resources */,
+				07897259299177F300B81626 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		07897265299177F500B81626 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0789726F299177F500B81626 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0789724A299177F300B81626 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07897256299177F300B81626 /* ViewController.swift in Sources */,
+				07897252299177F300B81626 /* AppDelegate.swift in Sources */,
+				0789725C299177F300B81626 /* twod_heat_map.xcdatamodeld in Sources */,
+				07897254299177F300B81626 /* SceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		07897263299177F500B81626 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0789726C299177F500B81626 /* twod_heat_mapTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0789726D299177F500B81626 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07897276299177F500B81626 /* twod_heat_mapUITests.swift in Sources */,
+				07897278299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		07897269299177F500B81626 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0789724D299177F300B81626 /* twod-heat-map */;
+			targetProxy = 07897268299177F500B81626 /* PBXContainerItemProxy */;
+		};
+		07897273299177F500B81626 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0789724D299177F300B81626 /* twod-heat-map */;
+			targetProxy = 07897272299177F500B81626 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		07897257299177F300B81626 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				07897258299177F300B81626 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		0789725F299177F500B81626 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				07897260299177F500B81626 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		07897279299177F500B81626 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		0789727A299177F500B81626 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0789727C299177F500B81626 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "twod-heat-map/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-map";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0789727D299177F500B81626 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "twod-heat-map/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-map";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		0789727F299177F500B81626 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-mapTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/twod-heat-map.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/twod-heat-map";
+			};
+			name = Debug;
+		};
+		07897280299177F500B81626 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-mapTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/twod-heat-map.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/twod-heat-map";
+			};
+			name = Release;
+		};
+		07897282299177F500B81626 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-mapUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "twod-heat-map";
+			};
+			name = Debug;
+		};
+		07897283299177F500B81626 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4UCSSRRK98;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.nearwave.twod-heat-mapUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "twod-heat-map";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		07897249299177F300B81626 /* Build configuration list for PBXProject "twod-heat-map" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				07897279299177F500B81626 /* Debug */,
+				0789727A299177F500B81626 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0789727B299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-map" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0789727C299177F500B81626 /* Debug */,
+				0789727D299177F500B81626 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0789727E299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-mapTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0789727F299177F500B81626 /* Debug */,
+				07897280299177F500B81626 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		07897281299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-mapUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				07897282299177F500B81626 /* Debug */,
+				07897283299177F500B81626 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		0789725A299177F300B81626 /* twod_heat_map.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				0789725B299177F300B81626 /* twod_heat_map.xcdatamodel */,
+			);
+			currentVersion = 0789725B299177F300B81626 /* twod_heat_map.xcdatamodel */;
+			path = twod_heat_map.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 07897246299177F300B81626 /* Project object */;
+}
