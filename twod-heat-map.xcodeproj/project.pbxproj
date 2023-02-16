@@ -17,6 +17,20 @@
 		0789726C299177F500B81626 /* twod_heat_mapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0789726B299177F500B81626 /* twod_heat_mapTests.swift */; };
 		07897276299177F500B81626 /* twod_heat_mapUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897275299177F500B81626 /* twod_heat_mapUITests.swift */; };
 		07897278299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897277299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift */; };
+		078972872991975C00B81626 /* HeatMapGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972862991975C00B81626 /* HeatMapGenerator.swift */; };
+		0789728B2993215E00B81626 /* eric-heatmap-data.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0789728A2993215E00B81626 /* eric-heatmap-data.csv */; };
+		0789728D29948B9200B81626 /* eric-heatmap-data2.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0789728C29948B9200B81626 /* eric-heatmap-data2.csv */; };
+		0789728F2997444400B81626 /* CubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0789728E2997444300B81626 /* CubicSpline.swift */; };
+		07897293299AE25B00B81626 /* interpolation-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 07897292299AE25B00B81626 /* interpolation-100000-01-amplitude-phase.csv */; };
+		07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */; };
+		07897297299AF94400B81626 /* interpolation-100000-02-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 07897296299AF94400B81626 /* interpolation-100000-02-amplitude-phase.csv */; };
+		07897299299AF9F500B81626 /* interpolation-swirl-out-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 07897298299AF9F500B81626 /* interpolation-swirl-out-100000-01-amplitude-phase.csv */; };
+		0789729B299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */; };
+		078972A1299C2D1900B81626 /* tum5-100000-swirl-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 078972A0299C2D1900B81626 /* tum5-100000-swirl-01-amplitude-phase.csv */; };
+		078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972A2299DAA9F00B81626 /* Gaussian.swift */; };
+		078972A5299DD0CF00B81626 /* ericswirldata.csv in Resources */ = {isa = PBXBuildFile; fileRef = 078972A4299DD0CE00B81626 /* ericswirldata.csv */; };
+		078972A7299DD0D700B81626 /* ericswirldata2x.csv in Resources */ = {isa = PBXBuildFile; fileRef = 078972A6299DD0D700B81626 /* ericswirldata2x.csv */; };
+		82DAC4EC52FA98B80CB65FD3 /* Pods_twod_heat_map.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +65,22 @@
 		07897271299177F500B81626 /* twod-heat-mapUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "twod-heat-mapUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07897275299177F500B81626 /* twod_heat_mapUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = twod_heat_mapUITests.swift; sourceTree = "<group>"; };
 		07897277299177F500B81626 /* twod_heat_mapUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = twod_heat_mapUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		078972862991975C00B81626 /* HeatMapGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatMapGenerator.swift; sourceTree = "<group>"; };
+		0789728A2993215E00B81626 /* eric-heatmap-data.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "eric-heatmap-data.csv"; path = "../../../../Downloads/eric-heatmap-data.csv"; sourceTree = "<group>"; };
+		0789728C29948B9200B81626 /* eric-heatmap-data2.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "eric-heatmap-data2.csv"; path = "../../../../Downloads/eric-heatmap-data2.csv"; sourceTree = "<group>"; };
+		0789728E2997444300B81626 /* CubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubicSpline.swift; sourceTree = "<group>"; };
+		07897292299AE25B00B81626 /* interpolation-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "interpolation-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstrainedCubicSpline.swift; sourceTree = "<group>"; };
+		07897296299AF94400B81626 /* interpolation-100000-02-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "interpolation-100000-02-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-100000-02-amplitude-phase.csv"; sourceTree = "<group>"; };
+		07897298299AF9F500B81626 /* interpolation-swirl-out-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "interpolation-swirl-out-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-swirl-out-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		078972A0299C2D1900B81626 /* tum5-100000-swirl-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "tum5-100000-swirl-01-amplitude-phase.csv"; path = "../../../../Downloads/tum5-100000-swirl-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		078972A2299DAA9F00B81626 /* Gaussian.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gaussian.swift; sourceTree = "<group>"; };
+		078972A4299DD0CE00B81626 /* ericswirldata.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ericswirldata.csv; path = ../../nearwave_test_code/test_files/ericswirldata.csv; sourceTree = "<group>"; };
+		078972A6299DD0D700B81626 /* ericswirldata2x.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ericswirldata2x.csv; path = ../../nearwave_test_code/test_files/ericswirldata2x.csv; sourceTree = "<group>"; };
+		2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_twod_heat_map.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		28BADDFF7FC75334A48E2C93 /* Pods-twod-heat-map.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.debug.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.debug.xcconfig"; sourceTree = "<group>"; };
+		3F748DE0FDDF7CA75A4BE95C /* Pods-twod-heat-map.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.release.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82DAC4EC52FA98B80CB65FD3 /* Pods_twod_heat_map.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +116,8 @@
 				0789726A299177F500B81626 /* twod-heat-mapTests */,
 				07897274299177F500B81626 /* twod-heat-mapUITests */,
 				0789724F299177F300B81626 /* Products */,
+				C8007DED545B4E69DC68F8EC /* Pods */,
+				3D06A2E25CB94E1A9D5C1EDE /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +142,19 @@
 				0789725F299177F500B81626 /* LaunchScreen.storyboard */,
 				07897262299177F500B81626 /* Info.plist */,
 				0789725A299177F300B81626 /* twod_heat_map.xcdatamodeld */,
+				078972862991975C00B81626 /* HeatMapGenerator.swift */,
+				0789728C29948B9200B81626 /* eric-heatmap-data2.csv */,
+				0789728A2993215E00B81626 /* eric-heatmap-data.csv */,
+				078972A0299C2D1900B81626 /* tum5-100000-swirl-01-amplitude-phase.csv */,
+				07897292299AE25B00B81626 /* interpolation-100000-01-amplitude-phase.csv */,
+				0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */,
+				07897296299AF94400B81626 /* interpolation-100000-02-amplitude-phase.csv */,
+				07897298299AF9F500B81626 /* interpolation-swirl-out-100000-01-amplitude-phase.csv */,
+				0789728E2997444300B81626 /* CubicSpline.swift */,
+				07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */,
+				078972A2299DAA9F00B81626 /* Gaussian.swift */,
+				078972A4299DD0CE00B81626 /* ericswirldata.csv */,
+				078972A6299DD0D700B81626 /* ericswirldata2x.csv */,
 			);
 			path = "twod-heat-map";
 			sourceTree = "<group>";
@@ -130,6 +176,23 @@
 			path = "twod-heat-mapUITests";
 			sourceTree = "<group>";
 		};
+		3D06A2E25CB94E1A9D5C1EDE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C8007DED545B4E69DC68F8EC /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				28BADDFF7FC75334A48E2C93 /* Pods-twod-heat-map.debug.xcconfig */,
+				3F748DE0FDDF7CA75A4BE95C /* Pods-twod-heat-map.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -137,9 +200,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0789727B299177F500B81626 /* Build configuration list for PBXNativeTarget "twod-heat-map" */;
 			buildPhases = (
+				546057A3DABB99224FB7B8BD /* [CP] Check Pods Manifest.lock */,
 				0789724A299177F300B81626 /* Sources */,
 				0789724B299177F300B81626 /* Frameworks */,
 				0789724C299177F300B81626 /* Resources */,
+				3DF2CEE1F999E0B2D243E6C9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -235,8 +300,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				07897261299177F500B81626 /* LaunchScreen.storyboard in Resources */,
+				078972A1299C2D1900B81626 /* tum5-100000-swirl-01-amplitude-phase.csv in Resources */,
+				07897297299AF94400B81626 /* interpolation-100000-02-amplitude-phase.csv in Resources */,
+				07897293299AE25B00B81626 /* interpolation-100000-01-amplitude-phase.csv in Resources */,
+				078972A5299DD0CF00B81626 /* ericswirldata.csv in Resources */,
+				0789728D29948B9200B81626 /* eric-heatmap-data2.csv in Resources */,
 				0789725E299177F500B81626 /* Assets.xcassets in Resources */,
+				0789728B2993215E00B81626 /* eric-heatmap-data.csv in Resources */,
+				07897299299AF9F500B81626 /* interpolation-swirl-out-100000-01-amplitude-phase.csv in Resources */,
+				078972A7299DD0D700B81626 /* ericswirldata2x.csv in Resources */,
 				07897259299177F300B81626 /* Main.storyboard in Resources */,
+				0789729B299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +330,48 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		3DF2CEE1F999E0B2D243E6C9 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		546057A3DABB99224FB7B8BD /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-twod-heat-map-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		0789724A299177F300B81626 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -265,6 +381,10 @@
 				07897252299177F300B81626 /* AppDelegate.swift in Sources */,
 				0789725C299177F300B81626 /* twod_heat_map.xcdatamodeld in Sources */,
 				07897254299177F300B81626 /* SceneDelegate.swift in Sources */,
+				078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */,
+				078972872991975C00B81626 /* HeatMapGenerator.swift in Sources */,
+				07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */,
+				0789728F2997444400B81626 /* CubicSpline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -436,6 +556,7 @@
 		};
 		0789727C299177F500B81626 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 28BADDFF7FC75334A48E2C93 /* Pods-twod-heat-map.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -464,6 +585,7 @@
 		};
 		0789727D299177F500B81626 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3F748DE0FDDF7CA75A4BE95C /* Pods-twod-heat-map.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
