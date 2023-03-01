@@ -42,34 +42,54 @@ public class HeatMapGenerator {
     // Different arrays for holding data
     
     // A storage of all of the data we've seen
-    var rawData : [SensorData?] = Array(repeating: nil, count: 160000)
+    var rawData: [SensorData?] = Array(repeating: nil, count: 160000)
     var pointsAdded = 0
     
     // The data points from above plotted on x, y coordinates. For any collisions, we add them to a running average at the point
     var heatMapDataArray : [[WeightedDataPoint?]] = [[]]
     
     // An array of the data above that uses spline interpolation along rows/columns to fill in the blank spots of the data area
-    var splineInterpolatedDataArray : [[InterpolatedDataPoint?]] = [[]]
+    var horizontalSplineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]]
+    var verticalSplineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]]
     
-    var horizontalSplineInterpolatedDataArray : [[InterpolatedDataPoint?]] = [[]]
-    var verticalSplineInterpolatedDataArray : [[InterpolatedDataPoint?]] = [[]]
+    var downrightDiagonalSplineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]]
+    var downleftDiagonalSplineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]]
+    
+    var splineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]] // This uses exponential weighted avg
+    var cubicWeightSplineInterpolatedDataArray: [[InterpolatedDataPoint?]] = [[]]
+    
+    // Used for image gen/error calculation, they are bad
+    var linearWeightSplineInterpoaltedDataArray: [[InterpolatedDataPoint?]] = [[]]
+    var unconstrainedHorizontalSpline: [[InterpolatedDataPoint?]] = [[]]
+    var unconstrainedVerticalSpline: [[InterpolatedDataPoint?]] = [[]]
+
     
     // A sparse array that holds the running average for each interpSquareSize x interpSquareSize square from splineInterpolatedDataArray
-    var squareAverageDataArray : [[WeightedDataPoint?]] = [[]]
+    var squareAverageDataArray: [[WeightedDataPoint?]] = [[]]
+    
+    // Used for images
+    var squareAverageDataArray1mm: [[WeightedDataPoint?]] = [[]]
+    var squareAverageDataArray2mm: [[WeightedDataPoint?]] = [[]]
+    var squareAverageDataArray4mm: [[WeightedDataPoint?]] = [[]]
     
     // The bicubic interpolation data from the square average data array
-    var bicubicInterpDataArray : [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray: [[WeightedDataPoint?]] = [[]]
+    
+    var bicubicInterpDataArray0mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray1mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray2mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray4mm: [[WeightedDataPoint?]] = [[]]
     
     // Contain pre-calculated square and cubic values for numbers between 0 and 1 based on interpSquareSize.
     // Useful for the bicubic function to make it faster
-    var precalcStepSquared : [Double] = []
-    var precalcStepCubed : [Double] = []
+    var precalcStepSquared: [Double] = []
+    var precalcStepCubed: [Double] = []
     
     
     var pointsSet : Int = 0
     
     // x/y values should be in millimeters, resolution is pixels / millimeters, interpSquareSize is millimeters
-    init(_ minX: Int, _ maxX: Int, _ minY: Int, _ maxY: Int, _ resolution : Int, _ interpSquareSize: Int, _ dangerGap: Double, _ constrainedCubic: Bool, _ exponentialWeighted: Bool) {
+    init(minX: Int, maxX: Int, minY: Int, maxY: Int, resolution : Int, interpSquareSize: Int, dangerGap: Double, constrainedCubic: Bool, exponentialWeighted: Bool) {
         self.graphMinX = minX
         self.graphMinY = minY
         self.graphMaxX = maxX
@@ -98,31 +118,72 @@ public class HeatMapGenerator {
     }
     private func resetArrays() {
         heatMapDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
-        splineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
-        squareAverageDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / interpSquareSize), count: (graphMaxY - graphMinY) / interpSquareSize)
-        bicubicInterpDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
         horizontalSplineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         verticalSplineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        downleftDiagonalSplineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        downrightDiagonalSplineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+        
+        unconstrainedHorizontalSpline = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        unconstrainedVerticalSpline = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+        splineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        linearWeightSplineInterpoaltedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        cubicWeightSplineInterpolatedDataArray = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+        squareAverageDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / interpSquareSize), count: (graphMaxY - graphMinY) / interpSquareSize)
+        squareAverageDataArray1mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 1), count: (graphMaxY - graphMinY) / 1)
+        squareAverageDataArray2mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 2), count: (graphMaxY - graphMinY) / 2)
+        squareAverageDataArray4mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 4), count: (graphMaxY - graphMinY) / 4)
+        
+        bicubicInterpDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray0mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray1mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray2mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray4mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+
         pointsSet = 0
     }
     
     public func processData () {
-        for x in 0..<heatMapDataArray[0].count {
-            for y in 0..<heatMapDataArray.count {
-                let value = heatMapDataArray[y][x]?.value
-                if value != nil {
-                    print(getAbsoluteCoordInMmFromI(graphMin: graphMinX, graphMax: graphMinY, i: x), ",", getAbsoluteCoordInMmFromI(graphMin: graphMinY, graphMax: graphMaxY, i: heatMapDataArray.count - 1 - y) , ",", abs(Float(value!)), separator: "")
-                }
-            }
-        }
+//        for x in 0..<heatMapDataArray[0].count {
+//            for y in 0..<heatMapDataArray.count {
+//                let value = heatMapDataArray[y][x]?.value
+//                if value != nil {
+//                    print(getAbsoluteCoordInMmFromI(graphMin: graphMinX, graphMax: graphMinY, i: x), ",", getAbsoluteCoordInMmFromI(graphMin: graphMinY, graphMax: graphMaxY, i: heatMapDataArray.count - 1 - y) , ",", abs(Float(value!)), separator: "")
+//                }
+//            }
+//        }
         precalcCubicValues(step: interpSquareSize)
         performSplineInterpolation()
-        createSquareAverages()
+
+//        createSquareAverages(squareSize: interpSquareSize)
+        self.interpSquareSize = 1
+        precalcCubicValues(step: 1)
+        createSquareAverages(squareSize: 1)
         performBicubicInterpolation()
+        
+        self.interpSquareSize = 2
+        precalcCubicValues(step: 2)
+        createSquareAverages(squareSize: 2)
+        performBicubicInterpolation()
+        
+        self.interpSquareSize = 4
+        precalcCubicValues(step: 4)
+        createSquareAverages(squareSize: 4)
+        performBicubicInterpolation()
+        
+        
+//        createSquareAverages(squareSize: 2)
+//        createSquareAverages(squareSize: 4)
+//
+        //performBicubicInterpolation()
     }
     
     public func processNewDataPoint(dataPoint: SensorData) {
-        rawData[pointsAdded] = dataPoint
+        //rawData[pointsAdded] = dataPoint
         pointsAdded += 1
         addDataPointToHeatMap(dataPoint: dataPoint)
     }
@@ -147,7 +208,6 @@ public class HeatMapGenerator {
         } else {
             let newVal = (weightedPoint!.value * Double(weightedPoint!.samplesTaken) + dataPoint.z) / Double(weightedPoint!.samplesTaken + 1)
             heatMapDataArray[yIndex][xIndex] = WeightedDataPoint(value: newVal, samplesTaken: weightedPoint!.samplesTaken + 1)
-
         }
         
         self.minZ = Double.minimum(self.minZ, dataPoint.z)
@@ -155,11 +215,19 @@ public class HeatMapGenerator {
     }
     
     public func performSplineInterpolation() {
-        for y in 0..<heatMapDataArray[0].count {
+        for y in 0..<heatMapDataArray.count {
             cubicSplineInterpolateLine(c: y, horizontal: true)
+            // Down right
+            cubicSplineInterpolateDiagonal(startX: 0, startY: y, xDir: 1, yDir: 1)
+            // Down left
+            cubicSplineInterpolateDiagonal(startX: heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
         }
-        for x in 0..<heatMapDataArray.count {
+        for x in 0..<heatMapDataArray[0].count {
             cubicSplineInterpolateLine(c: x, horizontal: false)
+            // Down right
+            cubicSplineInterpolateDiagonal(startX: x, startY: 0, xDir: 1, yDir: 1)
+            // Down left
+            cubicSplineInterpolateDiagonal(startX: heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
         }
         performSplineWeightedAverage()
     }
@@ -169,13 +237,13 @@ public class HeatMapGenerator {
         var zValues : [Double] = []
         var minI = 10000000
         var maxI = 0
-        let rowSize = horizontal ? heatMapDataArray.count : heatMapDataArray[0].count
+        let rowSize = horizontal ? heatMapDataArray[0].count : heatMapDataArray.count
         for i in 0..<rowSize {
             var val : Double? = nil
             if horizontal {
-                val = heatMapDataArray[i][c]?.value
-            } else {
                 val = heatMapDataArray[c][i]?.value
+            } else {
+                val = heatMapDataArray[i][c]?.value
             }
             if val != nil {
                 xPoints.append(Double(i))
@@ -200,18 +268,83 @@ public class HeatMapGenerator {
 
             // TODO: This will probably need some fine tuning
             // if xDiffTotal >= 30 && (xDiffFirstHalf >= 10 && xDiffSecondHalf >= 10)
-            let spliner = ConstrainedCubicSpline(xPoints: xPoints, yPoints: zValues, maxDistance: Double(30 * resolution))
+            let unconstrainedSpliner = CubicSpline(xPoints: xPoints, yPoints: zValues)
+            let spliner = ConstrainedCubicSpline(xPoints: xPoints, yPoints: zValues, maxDistance: Double(100 * resolution))
             for i in minI..<maxI {
-                //let xCoord = getAbsoluteCoordInMmFromI(graphMin: graphMinX, graphMax: graphMaxX, i: interpI)
                 //print("spline interp at x=", i, "y=", y, "is", spliner.interpolate(Double(i)))
                 let splineValues = spliner.interpolate(Double(i))
+                
                 if splineValues != nil {
                     if horizontal {
-                        horizontalSplineInterpolatedDataArray[i][c] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance)
+                        horizontalSplineInterpolatedDataArray[c][i] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance)
                     } else {
-                        verticalSplineInterpolatedDataArray[c][i] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance)
+                        verticalSplineInterpolatedDataArray[i][c] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance)
                     }
                 }
+                let wildValue = unconstrainedSpliner.interpolate(Double(i))
+                if wildValue != nil {
+                    if horizontal {
+                        unconstrainedHorizontalSpline[c][i] = InterpolatedDataPoint(value: wildValue, distance: 0.0)
+                    } else {
+                        unconstrainedVerticalSpline[i][c] = InterpolatedDataPoint(value: wildValue, distance: 0.0)
+                    }
+                }
+
+            }
+        }
+    }
+    
+    public func cubicSplineInterpolateDiagonal(startX: Int, startY: Int, xDir: Int, yDir: Int) {
+        var tPoints : [Double] = []
+        var zValues : [Double] = []
+        var minT = 10000000
+        var maxT = 0
+        for t in 0..<100000 {
+            let xCoord = startX + t * xDir
+            let yCoord = startY + t * yDir
+            if xCoord >= heatMapDataArray[0].count || yCoord >= heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
+                break
+            }
+            let val = heatMapDataArray[yCoord][xCoord]?.value
+            if val != nil {
+                tPoints.append(Double(t))
+                zValues.append(val!)
+                //print("pushing t=", t, "z=", val)
+                maxT = t
+                if minT == 10000000 {
+                    minT = t
+                }
+            }
+        }
+        
+//        print(xPoints)
+//        print(minT)
+//        print(maxT)
+        if tPoints.count >= 3 {
+            // TODO: This will probably need some fine tuning
+            // if xDiffTotal >= 30 && (xDiffFirstHalf >= 10 && xDiffSecondHalf >= 10)
+            //let unconstrainedSpliner = CubicSpline(xPoints: xPoints, yPoints: zValues)
+            let spliner = ConstrainedCubicSpline(xPoints: tPoints, yPoints: zValues, maxDistance: Double(15 * resolution))
+            for t in minT..<maxT {
+                //print("spline interp at x=", i, "y=", y, "is", spliner.interpolate(Double(i)))
+                let splineValues = spliner.interpolate(Double(t))
+                
+                if splineValues != nil {
+                    if xDir * yDir > 0 {
+                        downrightDiagonalSplineInterpolatedDataArray[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance * sqrt(2))
+                    } else {
+                        downleftDiagonalSplineInterpolatedDataArray[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: splineValues!.value, distance: splineValues!.distance * sqrt(2))
+                    }
+                    
+                }
+//                let wildValue = unconstrainedSpliner.interpolate(Double(i))
+//                if wildValue != nil {
+//                    if horizontal {
+//                        unconstrainedHorizontalSpline[c][i] = InterpolatedDataPoint(value: wildValue, distance: 0.0)
+//                    } else {
+//                        unconstrainedVerticalSpline[i][c] = InterpolatedDataPoint(value: wildValue, distance: 0.0)
+//                    }
+//                }
 
             }
         }
@@ -222,45 +355,112 @@ public class HeatMapGenerator {
             for y in 0..<heatMapDataArray.count {
                 let verticalVal = verticalSplineInterpolatedDataArray[y][x]
                 let horizontalVal = horizontalSplineInterpolatedDataArray[y][x]
-                //print("horizontalVal=", horizontalVal)
-                if verticalVal != nil && horizontalVal != nil {
-                    // Squared formula
-                    let totalDistance = pow(horizontalVal!.distance, 2) + pow(verticalVal!.distance, 2)
-                    let yWeight = pow(horizontalVal!.distance, 2) / totalDistance
-                    let xWeight = pow(verticalVal!.distance, 2) / totalDistance
-                    let weightedVal = yWeight * verticalVal!.value + xWeight * horizontalVal!.value
-                    // Linear formula
-//                    let totalDistance = horizontalVal!.distance + verticalVal!.distance
-//                    let yWeight = horizontalVal!.distance / totalDistance
-//                    let xWeight = verticalVal!.distance / totalDistance
-//                    let weightedVal = yWeight * verticalVal!.value + xWeight * horizontalVal!.value
-                    //print("weightedVal=", weightedVal)
-                    splineInterpolatedDataArray[y][x] = InterpolatedDataPoint(value: weightedVal, distance: 0.0)
-                } else if verticalVal != nil {
-                    splineInterpolatedDataArray[y][x] = verticalVal
-                } else if horizontalVal != nil {
-                    splineInterpolatedDataArray[y][x] = horizontalVal
+                let diag1Val = downrightDiagonalSplineInterpolatedDataArray[y][x]
+                let diag2Val = downleftDiagonalSplineInterpolatedDataArray[y][x]
+                
+                // Linear, Square, Cubic
+                var numerators: [Double] = [0.0, 0.0, 0.0]
+                var denominators: [Double] = [0.0, 0.0, 0.0]
+                var haveAVal = false
+                
+                if verticalVal != nil {
+                    haveAVal = true
+                    let myVal = verticalVal!
+                    numerators[0] += myVal.value / myVal.distance
+                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+                    
+                    denominators[0] += 1.0 / myVal.distance
+                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+                    denominators[2] += 1.0 / pow(myVal.distance, 3)
                 }
+                if horizontalVal != nil {
+                    haveAVal = true
+                    let myVal = horizontalVal!
+                    numerators[0] += myVal.value / myVal.distance
+                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+                    
+                    denominators[0] += 1.0 / myVal.distance
+                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+                }
+                if diag1Val != nil {
+                    haveAVal = true
+                    let myVal = diag1Val!
+                    numerators[0] += myVal.value / myVal.distance
+                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+                    
+                    denominators[0] += 1.0 / myVal.distance
+                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+                }
+                if diag2Val != nil {
+                    haveAVal = true
+                    let myVal = diag2Val!
+                    numerators[0] += myVal.value / myVal.distance
+                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+                    
+                    denominators[0] += 1.0 / myVal.distance
+                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+                }
+                
+                if haveAVal {
+                    let linWeightedVal = numerators[0] / denominators[0]
+                    let squareWeightedVal = numerators[1] / denominators[1]
+                    let cubeWeightedVal = numerators[2] / denominators[2]
+                    
+                    linearWeightSplineInterpoaltedDataArray[y][x] = InterpolatedDataPoint(value: linWeightedVal, distance: 0.0)
+                    splineInterpolatedDataArray[y][x] = InterpolatedDataPoint(value: squareWeightedVal, distance: 0.0)
+                    cubicWeightSplineInterpolatedDataArray[y][x] = InterpolatedDataPoint(value: cubeWeightedVal, distance: 0.0)
+                }
+                
+                
+                //print("horizontalVal=", horizontalVal)
+//                if verticalVal != nil && horizontalVal != nil {
+//                    // Squared formula
+//                    let totalDistance = pow(horizontalVal!.distance, 2) + pow(verticalVal!.distance, 2)
+//                    let yWeight = pow(horizontalVal!.distance, 2) / totalDistance
+//                    let xWeight = pow(verticalVal!.distance, 2) / totalDistance
+//                    let weightedVal = yWeight * verticalVal!.value + xWeight * horizontalVal!.value
+//                    splineInterpolatedDataArray[y][x] = InterpolatedDataPoint(value: weightedVal, distance: 0.0)
+//
+//                    // Linear formula
+//                    let linTotalDistance = horizontalVal!.distance + verticalVal!.distance
+//                    let linYWeight = horizontalVal!.distance / linTotalDistance
+//                    let linXWeight = verticalVal!.distance / linTotalDistance
+//                    let linweightedVal = linYWeight * verticalVal!.value + linXWeight * horizontalVal!.value
+//                    linearWeightSplineInterpoaltedDataArray[y][x] = InterpolatedDataPoint(value: linweightedVal, distance: 0.0)
+//                    //print("weightedVal=", weightedVal)
+//
+//                } else if verticalVal != nil {
+//                    splineInterpolatedDataArray[y][x] = verticalVal
+//                    linearWeightSplineInterpoaltedDataArray[y][x] = verticalVal
+//                } else if horizontalVal != nil {
+//                    splineInterpolatedDataArray[y][x] = horizontalVal
+//                    linearWeightSplineInterpoaltedDataArray[y][x] = horizontalVal
+//                }
             }
         }
     }
     
-    public func getAbsoluteCoordInMmFromI(graphMin: Int, graphMax: Int, i: Int) -> Double {
-        return Double(graphMin) + Double(i) / Double(resolution)
-    }
+
     
 
     // Loop through data in chunks of size x size and set the bottom left pixel to that data
-    public func createSquareAverages() {
-        let horizontalIterations = (graphMaxX - graphMinX) / interpSquareSize
-        let verticalIterations = (graphMaxY - graphMinY) / interpSquareSize
+    public func createSquareAverages(squareSize: Int) {
+        let horizontalIterations = (graphMaxX - graphMinX) / squareSize
+        let verticalIterations = (graphMaxY - graphMinY) / squareSize
         for x in 0..<horizontalIterations {
             for y in 0..<verticalIterations {
                 var localSum : Double = 0.0
                 var pointsTallied = 0
-                for i in 0..<interpSquareSize * resolution {
-                    for j in 0..<interpSquareSize * resolution {
-                        let z = splineInterpolatedDataArray[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i]?.value
+                for i in 0..<squareSize * resolution {
+                    for j in 0..<squareSize * resolution {
+                        let z = splineInterpolatedDataArray[y * squareSize * resolution + j][x * squareSize * resolution + i]?.value
                         if z != nil {
                             localSum += z!
                             pointsTallied += 1
@@ -271,7 +471,17 @@ public class HeatMapGenerator {
                 if pointsTallied > 0 {
                     let average = localSum / Double(pointsTallied)
                     let newPoint = WeightedDataPoint(value: average, samplesTaken: 0)
-                    squareAverageDataArray[y][x] = newPoint
+                    if squareSize == 1 {
+                        squareAverageDataArray1mm[y][x] = newPoint
+                    } else if squareSize == 2 {
+                        squareAverageDataArray2mm[y][x] = newPoint
+                    } else if squareSize == 4 {
+                        squareAverageDataArray4mm[y][x] = newPoint
+                    }
+//                    if squareSize == interpSquareSize {
+//                        squareAverageDataArray[y][x] = newPoint
+//                    }
+                    //squareAverageDataArray[y][x] = newPoint
 //                    for i in 0..<interpSquareSize {
 //                        for j in 0..<interpSquareSize {
 //                            bicubicInterpDataArray[x * interpSquareSize + i][y * interpSquareSize + j] = newPoint
@@ -296,8 +506,22 @@ public class HeatMapGenerator {
     }
     
     public func performBicubicInterpolation() {
-        for x in 0..<squareAverageDataArray[0].count {
-            for y in 0..<squareAverageDataArray.count {
+        var xCount = 1
+        var yCount = 1
+        
+        if self.interpSquareSize == 1 {
+            xCount = squareAverageDataArray1mm[0].count
+            yCount = squareAverageDataArray1mm.count
+        } else if self.interpSquareSize == 2 {
+            xCount = squareAverageDataArray2mm[0].count
+            yCount = squareAverageDataArray2mm.count
+        } else if self.interpSquareSize == 4 {
+            xCount = squareAverageDataArray4mm[0].count
+            yCount = squareAverageDataArray4mm.count
+        }
+        
+        for x in 0..<xCount {
+            for y in 0..<yCount {
                 bicubInterpSquare(x: x, y: y)
             }
         }
@@ -305,7 +529,14 @@ public class HeatMapGenerator {
     }
     
     private func bicubInterpSquare(x: Int, y: Int) {
-        let mapValues = squareAverageDataArray
+        var mapValues: [[WeightedDataPoint?]] = [[]]
+        if self.interpSquareSize == 1 {
+            mapValues = squareAverageDataArray1mm
+        } else if self.interpSquareSize == 2 {
+            mapValues = squareAverageDataArray2mm
+        } else if self.interpSquareSize == 4 {
+            mapValues = squareAverageDataArray4mm
+        }
         let xMaxIndex = mapValues[0].count - 1
         let yMaxIndex = mapValues.count - 1
         
@@ -469,11 +700,80 @@ public class HeatMapGenerator {
                 //bicubicInterpDataArray[x + i][y + step - j - 1] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
                 // Working before swap
 //                bicubicInterpDataArray[x * interpSquareSize + step - 1 - j][y * interpSquareSize + step - i - 1] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
-                bicubicInterpDataArray[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                if interpSquareSize == 1 {
+                    bicubicInterpDataArray1mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                } else if interpSquareSize == 2 {
+                    bicubicInterpDataArray2mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                } else if interpSquareSize == 4 {
+                    bicubicInterpDataArray4mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                }
+                
             }
         }
 //        
 //        
+    }
+    
+    public func getAbsoluteXCoordInMmFromI(_ i: Int) -> Double {
+        return Double(graphMinX) + (Double(i) / Double(resolution))
+    }
+    
+    public func getAbsoluteYCoordInMmFromJ(_ j: Int) -> Double {
+        return Double(graphMaxY) - (Double(j) / Double(resolution))
+    }
+    
+    public func getXIndexFromXCoord(_ x: Double) -> Int {
+        return Int((x - Double(graphMinX)) * Double(resolution))
+    }
+    
+    public func getYIndexFromYCoord(_ y: Double) -> Int {
+        return Int((Double(graphMaxY) - y) * Double(resolution))
+    }
+    
+    
+    func calculateError(interpArray: [[DataPoint?]], gaussians: [Gaussian], xMin: Int, xMax: Int, yMin: Int, yMax: Int) {
+        var totalError: Double = 0.0
+        var totalAbsError: Double = 0.0
+        var totalErrorSquared: Double = 0.0
+        var totalErrorPercent: Double = 0.0
+        var pointsComputed: Int = 0
+        
+        let xMinIndex = getXIndexFromXCoord(Double(xMin))
+        let xMaxIndex = getXIndexFromXCoord(Double(xMax))
+        let yMinIndex = getYIndexFromYCoord(Double(yMax))
+        let yMaxIndex = getYIndexFromYCoord(Double(yMin))
+        
+//        print("xMin=", xMin, "xMinIndex=", xMinIndex)
+//        print("xMin=", xMax, "xMinIndex=", xMaxIndex)
+//        print("yMin=", yMin, "xMinIndex=", yMinIndex)
+//        print("yMax=", yMax, "xMinIndex=", yMaxIndex)
+        
+        for i in xMinIndex..<xMaxIndex {
+            for j in yMinIndex..<yMaxIndex {
+                let interpVal = interpArray[j][i]?.value
+                if interpVal != nil {
+                    var realVal: Double = 0.0
+                    for gaussian in gaussians {
+                        realVal -= gaussian.getVal(getAbsoluteXCoordInMmFromI(i), getAbsoluteYCoordInMmFromJ(j))
+                    }
+                    let error =  realVal - interpVal!
+                    totalError += error
+                    totalAbsError += abs(error)
+                    totalErrorPercent += 100.0 * abs(error) / abs(realVal)
+                    totalErrorSquared += error * error
+                    pointsComputed += 1
+                }
+            }
+        }
+        //let avgError = totalError / Double(pointsComputed)
+        let avgErrorPercent = totalErrorPercent / Double(pointsComputed)
+        let avgAbsError = totalAbsError / Double(pointsComputed)
+        let standardDeviation = sqrt(totalErrorSquared / Double(pointsComputed))
+        //print("pointsComputed is", pointsComputed)
+        //print("average error =", avgError)
+        print("average error percent=", avgErrorPercent)
+        print("average absolute error =", avgAbsError)
+        print("standard deviation = ", standardDeviation)
     }
     
     
@@ -498,7 +798,12 @@ public class HeatMapGenerator {
                     
                     // White pixels centimeter locations
                     if showSquares && ((x % (10 * resolution) == 0 && y % (10 * resolution) == 0)) {
-                        pixels[oneDIndex] = PixelData(a: 255, r: 255, g: 255, b: 255)
+                        if x % (20 * resolution) == 0 {
+                            pixels[oneDIndex] = PixelData(a: 255, r: 255, g: 0, b: 0)
+                        } else {
+                            pixels[oneDIndex] = PixelData(a: 255, r: 255, g: 255, b: 255)
+                        }
+                        
                     } else if let weightedPoint = dataArray[y][x] {
                         let z = weightedPoint.value
                         //print("z is", z)
@@ -541,6 +846,8 @@ public class HeatMapGenerator {
         return generateImageFromPixels(pixelData: pixels, width: width, height: height)
     }
     
+    
+    
     public func generateImageFromPixels(pixelData: [PixelData], width: Int, height: Int) -> UIImage {
         var data = pixelData
         let providerRef = CGDataProvider(data: NSData(bytes: &data, length: data.count * MemoryLayout<PixelData>.size))!
@@ -560,6 +867,7 @@ public class HeatMapGenerator {
         )!
         return UIImage(cgImage: cgim)
     }
+    
     
 }
 

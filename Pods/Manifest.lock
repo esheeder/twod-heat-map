@@ -1,0 +1,30 @@
+PODS:
+  - Charts (4.1.0):
+    - Charts/Core (= 4.1.0)
+  - Charts/Core (4.1.0):
+    - SwiftAlgorithms (~> 1.0)
+  - LFHeatMap (1.0.2)
+  - SMHeatMapView (1.0.0)
+  - SwiftAlgorithms (1.0.0)
+
+DEPENDENCIES:
+  - Charts
+  - LFHeatMap
+  - SMHeatMapView
+
+SPEC REPOS:
+  trunk:
+    - Charts
+    - LFHeatMap
+    - SMHeatMapView
+    - SwiftAlgorithms
+
+SPEC CHECKSUMS:
+  Charts: 354f86803d11d9c35de280587fef50d1af063978
+  LFHeatMap: 433197b20e4d57a9502bc2a2a21300fa851ff3c6
+  SMHeatMapView: c377eabcee2ef837e500888b4e5e5e341b7f679e
+  SwiftAlgorithms: 38dda4731d19027fdeee1125f973111bf3386b53
+
+PODFILE CHECKSUM: 0d76db36154594dfd598fbca1eba533ad62b0c33
+
+COCOAPODS: 1.11.3
