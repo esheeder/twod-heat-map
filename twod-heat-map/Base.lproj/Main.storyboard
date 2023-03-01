@@ -20,10 +20,6 @@
                                 <rect key="frame" x="40" y="481" width="43" height="294"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="WtR-ob-xSu" userLabel="Da Image2">
-                                <rect key="frame" x="596" y="185.5" width="480" height="480"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="mnP-b9-woQ" userLabel="Da Image4">
                                 <rect key="frame" x="1104" y="758.5" width="43" height="51"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -33,7 +29,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="fBe-av-5d9">
-                                <rect key="frame" x="58" y="185.5" width="480" height="480"/>
+                                <rect key="frame" x="5" y="122" width="550" height="550"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="blu-t6-K4Z" userLabel="xminTextField">
@@ -194,6 +190,10 @@
                                     <action selector="textFieldChanged:" destination="BYZ-38-t0r" eventType="editingDidEnd" id="Npk-n7-PNI"/>
                                 </connections>
                             </textField>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="WtR-ob-xSu" userLabel="Da Image2">
+                                <rect key="frame" x="620" y="122.5" width="550" height="550"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemIndigoColor"/>

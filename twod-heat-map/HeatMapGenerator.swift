@@ -72,6 +72,8 @@ public class HeatMapGenerator {
     var squareAverageDataArray2mm: [[WeightedDataPoint?]] = [[]]
     var squareAverageDataArray4mm: [[WeightedDataPoint?]] = [[]]
     
+
+    
     // The bicubic interpolation data from the square average data array
     var bicubicInterpDataArray: [[WeightedDataPoint?]] = [[]]
     
@@ -79,6 +81,14 @@ public class HeatMapGenerator {
     var bicubicInterpDataArray1mm: [[WeightedDataPoint?]] = [[]]
     var bicubicInterpDataArray2mm: [[WeightedDataPoint?]] = [[]]
     var bicubicInterpDataArray4mm: [[WeightedDataPoint?]] = [[]]
+    
+    // Trying to figure out if bicub func has a bug, can delete later
+    var squareAverageDataArray8mm: [[WeightedDataPoint?]] = [[]]
+    var squareAverageDataArray12mm: [[WeightedDataPoint?]] = [[]]
+    var squareAverageDataArray16mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray8mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray12mm: [[WeightedDataPoint?]] = [[]]
+    var bicubicInterpDataArray16mm: [[WeightedDataPoint?]] = [[]]
     
     // Contain pre-calculated square and cubic values for numbers between 0 and 1 based on interpSquareSize.
     // Useful for the bicubic function to make it faster
@@ -137,11 +147,21 @@ public class HeatMapGenerator {
         squareAverageDataArray2mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 2), count: (graphMaxY - graphMinY) / 2)
         squareAverageDataArray4mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 4), count: (graphMaxY - graphMinY) / 4)
         
+
+        
         bicubicInterpDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         bicubicInterpDataArray0mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         bicubicInterpDataArray1mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         bicubicInterpDataArray2mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         bicubicInterpDataArray4mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+        // Delete these later
+        squareAverageDataArray8mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 8), count: (graphMaxY - graphMinY) / 8)
+        squareAverageDataArray12mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 12), count: (graphMaxY - graphMinY) / 12)
+        squareAverageDataArray16mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) / 16), count: (graphMaxY - graphMinY) / 16)
+        bicubicInterpDataArray8mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray12mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        bicubicInterpDataArray16mm = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         
 
         pointsSet = 0
@@ -173,6 +193,21 @@ public class HeatMapGenerator {
         self.interpSquareSize = 4
         precalcCubicValues(step: 4)
         createSquareAverages(squareSize: 4)
+        performBicubicInterpolation()
+        
+        self.interpSquareSize = 8
+        precalcCubicValues(step: 8)
+        createSquareAverages(squareSize: 8)
+        performBicubicInterpolation()
+        
+        self.interpSquareSize = 12
+        precalcCubicValues(step: 12)
+        createSquareAverages(squareSize: 12)
+        performBicubicInterpolation()
+        
+        self.interpSquareSize = 16
+        precalcCubicValues(step: 16)
+        createSquareAverages(squareSize: 16)
         performBicubicInterpolation()
         
         
@@ -477,6 +512,13 @@ public class HeatMapGenerator {
                         squareAverageDataArray2mm[y][x] = newPoint
                     } else if squareSize == 4 {
                         squareAverageDataArray4mm[y][x] = newPoint
+                    } else if squareSize == 8 {
+                        squareAverageDataArray8mm[y][x] = newPoint
+                    } else if squareSize == 12 {
+                        //print("in the 12")
+                        squareAverageDataArray12mm[y][x] = newPoint
+                    } else if squareSize == 16 {
+                        squareAverageDataArray16mm[y][x] = newPoint
                     }
 //                    if squareSize == interpSquareSize {
 //                        squareAverageDataArray[y][x] = newPoint
@@ -518,6 +560,15 @@ public class HeatMapGenerator {
         } else if self.interpSquareSize == 4 {
             xCount = squareAverageDataArray4mm[0].count
             yCount = squareAverageDataArray4mm.count
+        } else if self.interpSquareSize == 8 {
+            xCount = squareAverageDataArray8mm[0].count
+            yCount = squareAverageDataArray8mm.count
+        } else if self.interpSquareSize == 12 {
+            xCount = squareAverageDataArray12mm[0].count
+            yCount = squareAverageDataArray12mm.count
+        } else if self.interpSquareSize == 16 {
+            xCount = squareAverageDataArray16mm[0].count
+            yCount = squareAverageDataArray16mm.count
         }
         
         for x in 0..<xCount {
@@ -536,6 +587,12 @@ public class HeatMapGenerator {
             mapValues = squareAverageDataArray2mm
         } else if self.interpSquareSize == 4 {
             mapValues = squareAverageDataArray4mm
+        } else if self.interpSquareSize == 8 {
+            mapValues = squareAverageDataArray8mm
+        } else if self.interpSquareSize == 12 {
+            mapValues = squareAverageDataArray12mm
+        } else if self.interpSquareSize == 16 {
+            mapValues = squareAverageDataArray16mm
         }
         let xMaxIndex = mapValues[0].count - 1
         let yMaxIndex = mapValues.count - 1
@@ -706,7 +763,26 @@ public class HeatMapGenerator {
                     bicubicInterpDataArray2mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
                 } else if interpSquareSize == 4 {
                     bicubicInterpDataArray4mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                } else if interpSquareSize == 8 {
+                    bicubicInterpDataArray8mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                } else if interpSquareSize == 12 {
+                    bicubicInterpDataArray12mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                } else if interpSquareSize == 16 {
+                    bicubicInterpDataArray16mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
                 }
+//                if interpSquareSize == 1 {
+//                    bicubicInterpDataArray1mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                } else if interpSquareSize == 2 {
+//                    bicubicInterpDataArray2mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                } else if interpSquareSize == 4 {
+//                    bicubicInterpDataArray4mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                } else if interpSquareSize == 8 {
+//                    bicubicInterpDataArray8mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                } else if interpSquareSize == 12 {
+//                    bicubicInterpDataArray12mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                } else if interpSquareSize == 16 {
+//                    bicubicInterpDataArray16mm[y * interpSquareSize * resolution + j][x * interpSquareSize * resolution + i] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+//                }
                 
             }
         }

@@ -97,8 +97,8 @@ class ViewController: UIViewController {
     }
     
     func setImages() {
-        daImage.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.horizontalSplineInterpolatedDataArray, showSquares: true)
-        daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.verticalSplineInterpolatedDataArray, showSquares: true)
+        daImage.image = trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray, showSquares: true)
+        daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray4mm, showSquares: true)
 //        daImage3.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray, showSquares: false)
 //        daImage4.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray, showSquares: true)
     }
@@ -108,7 +108,7 @@ class ViewController: UIViewController {
         let folderDir = "/Users/eric/Documents/nearwave/twod-heat-map/Images/" + folder + "/"
         
         let images: [String: UIImage] = [
-            "0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
+            //"0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
             "0_rawData": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.heatMapDataArray),
             "1a_unconstrainedHorizontalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.unconstrainedHorizontalSpline),
             "1a_unconstrainedVerticalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.unconstrainedVerticalSpline),
@@ -122,9 +122,15 @@ class ViewController: UIViewController {
             "3a_1mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray1mm, showSquares: false),
             "3b_2mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray2mm, showSquares: false),
             "3c_4mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray4mm, showSquares: false),
+            "3d_8mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray8mm, showSquares: false),
+            "3e_12mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray12mm, showSquares: false),
+            "3f_16mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray16mm, showSquares: false),
             "4a_1mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray1mm),
             "4b_2mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray2mm),
             "4c_4mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray4mm),
+            "4d_8mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray8mm),
+            "4e_12mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray12mm),
+            "4f_16mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray16mm),
             
         ]
         
@@ -244,7 +250,7 @@ class ViewController: UIViewController {
         let gauss1 = Gaussian(xCenter: 60.0, yCenter: -15.0, amplitude: 80, sigmaX: 10, sigmaY: 10, theta: 0)
         let gauss2 = Gaussian(xCenter: 35.0, yCenter: -30.0, amplitude: 100, sigmaX: 10, sigmaY: 20, theta: Double.pi / 6.0)
         
-        let daGaussians = [gauss1, gauss2]
+        let daGaussians = [singleGauss]
         
         // Read the csv file and save each row of data as a triplet
         guard let filepath = Bundle.main.path(forResource: "interpolation-swirl-in-100000-01-amplitude-phase", ofType: "csv") else {
@@ -272,13 +278,13 @@ class ViewController: UIViewController {
                 let xCoord = 10.0 * Double(rowData[72])!
                 let yCoord = 10.0 * Double(rowData[73])!
                 // For real z values
-                let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: Double(rowData[3])!)
+                //let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: Double(rowData[3])!)
                 // For gauss values
-//                var gaussZ: Double = 0.0
-//                for gaussian in daGaussians {
-//                    gaussZ -= gaussian.getVal(xCoord, yCoord)
-//                }
-//                let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: gaussZ)
+                var gaussZ: Double = 0.0
+                for gaussian in daGaussians {
+                    gaussZ -= gaussian.getVal(xCoord, yCoord)
+                }
+                let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: gaussZ)
                 
                 theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
 
@@ -337,7 +343,7 @@ class ViewController: UIViewController {
         
         theGenerator.processData()
         setImages()
-        saveImages(folder: "Spiral/real")
+        saveImages(folder: "Spiral/1gauss/gaaa")
         //printError(daGaussians: daGaussians, xMin: 20, xMax: 80, yMin: -60, yMax: 0)
     }
     
