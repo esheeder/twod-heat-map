@@ -98,7 +98,7 @@ class ViewController: UIViewController {
     
     func setImages() {
         daImage.image = trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray, showSquares: true)
-        daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray4mm, showSquares: true)
+        //daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubInterpSizeToArray[4]!, showSquares: true)
 //        daImage3.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray, showSquares: false)
 //        daImage4.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray, showSquares: true)
     }
@@ -107,7 +107,7 @@ class ViewController: UIViewController {
     func saveImages(folder: String) {
         let folderDir = "/Users/eric/Documents/nearwave/twod-heat-map/Images/" + folder + "/"
         
-        let images: [String: UIImage] = [
+        var images: [String: UIImage] = [
             //"0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
             "0_rawData": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.heatMapDataArray),
             "1a_unconstrainedHorizontalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.unconstrainedHorizontalSpline),
@@ -116,23 +116,34 @@ class ViewController: UIViewController {
             "1b_constrainedVerticalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.verticalSplineInterpolatedDataArray),
             "1b_constrainedDownrightSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downrightDiagonalSplineInterpolatedDataArray),
             "1b_constrainedDownleftSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downleftDiagonalSplineInterpolatedDataArray),
-            "2a_linearWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightSplineInterpoaltedDataArray),
-            "2b_squareWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.splineInterpolatedDataArray),
-            "2c_cubeWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightSplineInterpolatedDataArray),
-            "3a_1mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray1mm, showSquares: false),
-            "3b_2mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray2mm, showSquares: false),
-            "3c_4mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray4mm, showSquares: false),
-            "3d_8mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray8mm, showSquares: false),
-            "3e_12mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray12mm, showSquares: false),
-            "3f_16mmSquareAverage": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray16mm, showSquares: false),
-            "4a_1mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray1mm),
-            "4b_2mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray2mm),
-            "4c_4mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray4mm),
-            "4d_8mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray8mm),
-            "4e_12mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray12mm),
-            "4f_16mmBicubicInterpolation": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray16mm),
-            
+            "2a1_linearWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightSplineInterpoaltedDataArray),
+            "2b2_squareWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.splineInterpolatedDataArray),
+            "2c3_cubeWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightSplineInterpolatedDataArray),
+            "9a_horizontalLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.horizontalLinearInterpolatedDataArray),
+            "9a_verticalLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.verticalLinearInterpolatedDataArray),
+            "9a_downLeftLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downleftDiagonalLinearInterpolatedDataArray),
+            "9a_downRightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downrightDiagonalLinearInterpolatedDataArray),
+//            "9b1_linearWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightLinearInterpolatedDataArray),
+//            "9b2_squareWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareWeightLinearInterpolatedDataArray),
+//            "9b3_cubeWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightLinearInterpolatedDataArray),
         ]
+        
+        for i in 0..<theGenerator.squareAverageSizes.count {
+            // Square avg
+            let size = theGenerator.squareAverageSizes[i]
+            let squareFileName = "3" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmSquareAverage"
+            //print(squareFileName)
+            let squareArray = theGenerator.squareAverageSizeToArray[size]!
+            let squareImage = theGenerator.createHeatMapImageFromDataArray(dataArray: squareArray)
+            images[squareFileName] = squareImage
+            
+            // Bicub
+            let bicubFileName = "4" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmBicubicInterpolation"
+            let bicubArray = theGenerator.bicubInterpSizeToArray[size]!
+            let bicubImage = theGenerator.createHeatMapImageFromDataArray(dataArray: bicubArray)
+            images[bicubFileName] = bicubImage
+            //let bicubArray =
+        }
         
         for key in Array(images.keys) {
             let data = images[key]!.pngData()!
@@ -253,7 +264,8 @@ class ViewController: UIViewController {
         let daGaussians = [singleGauss]
         
         // Read the csv file and save each row of data as a triplet
-        guard let filepath = Bundle.main.path(forResource: "interpolation-swirl-in-100000-01-amplitude-phase", ofType: "csv") else {
+        let filename = "interpolation-swirl-in-100000-01-amplitude-phase"
+        guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
             return
         }
         var csvAsString = ""
@@ -286,7 +298,7 @@ class ViewController: UIViewController {
                 }
                 let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: gaussZ)
                 
-                theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
+                //theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
 
             }
         }
@@ -324,8 +336,32 @@ class ViewController: UIViewController {
             }
         }
         
-        // Full Gaussian
+        // Tic tac toe sampling
         let step: Double = 1.0 / Double(generatorDefaults[4])
+        // Vertical lines
+        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: 5) {
+            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: step) {
+                var z: Double = 0.0
+                for gaussian in daGaussians {
+                    z -= gaussian.getVal(Double(x), Double(y))
+                }
+                let point = SensorData(x: Double(x), y: Double(y), z: z)
+                theGenerator.processNewDataPoint(dataPoint: point)
+            }
+        }
+        // Horizontal
+        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: step) {
+            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: 5) {
+                var z: Double = 0.0
+                for gaussian in daGaussians {
+                    z -= gaussian.getVal(Double(x), Double(y))
+                }
+                let point = SensorData(x: Double(x), y: Double(y), z: z)
+                theGenerator.processNewDataPoint(dataPoint: point)
+            }
+        }
+        
+        // Full Gaussian
         for x in stride(from: -10, to: 90, by: step) {
             for y in stride(from: -70, to: 10, by: step) {
                 var z: Double = 0.0
@@ -333,7 +369,7 @@ class ViewController: UIViewController {
                     z -= gaussian.getVal(x, y)
                 }
                 let point = SensorData(x: Double(x), y: Double(y), z: z)
-                trueGenerator.processNewDataPoint(dataPoint: point)
+                //trueGenerator.processNewDataPoint(dataPoint: point)
             }
         }
         
@@ -343,8 +379,47 @@ class ViewController: UIViewController {
         
         theGenerator.processData()
         setImages()
-        saveImages(folder: "Spiral/1gauss/gaaa")
+        printLineData()
+        //saveImages(folder: "tictactoe/1gauss")
+        
+        
+        //print("estimated row for y=-30")
+        
+//        print("true row for y=-30")
+//        theGenerator.printRowData(dataArray: trueGenerator.heatMapDataArray, yInMm: -30.0)
+        
+//        theGenerator.printColumnData(dataArray: trueGenerator.heatMapDataArray, xInMm: 50.0)
+//        print("estimated colum for x=50")
+//        theGenerator.printColumnData(dataArray: theGenerator.cubicWeightSplineInterpolatedDataArray, xInMm: 50.0)
+        
         //printError(daGaussians: daGaussians, xMin: 20, xMax: 80, yMin: -60, yMax: 0)
+    }
+    
+    func printLineData() {
+        print("raw linear, x=50")
+        theGenerator.printColumnData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, xInMm: 50.0)
+        print("")
+        
+        print("raw linear, y=-30")
+        theGenerator.printRowData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, yInMm: -30.0)
+        print("")
+        
+        print("raw unconstrained, x=50")
+        theGenerator.printColumnData(dataArray: theGenerator.unconstrainedVerticalSpline, xInMm: 50.0)
+        print("")
+        
+        print("raw unconstrained, y=-30")
+        theGenerator.printRowData(dataArray: theGenerator.unconstrainedHorizontalSpline, yInMm: -30.0)
+        print("")
+        
+        print("raw constrained, x=50")
+        theGenerator.printColumnData(dataArray: theGenerator.verticalSplineInterpolatedDataArray, xInMm: 50.0)
+        print("")
+        
+        print("raw constrained, y=-30")
+        theGenerator.printRowData(dataArray: theGenerator.horizontalSplineInterpolatedDataArray, yInMm: -30.0)
+        print("")
+        
     }
     
     func printError(daGaussians: [Gaussian], xMin: Int, xMax: Int, yMin: Int, yMax: Int) {
@@ -405,7 +480,7 @@ class ViewController: UIViewController {
         //print("Error for square average")
         
         print("Error for bicubic interp 1mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubicInterpDataArray1mm,
+        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[1]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -414,7 +489,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for bicubic interp 2mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubicInterpDataArray2mm,
+        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[2]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -423,7 +498,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for bicubic interp 4mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubicInterpDataArray4mm,
+        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[4]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
