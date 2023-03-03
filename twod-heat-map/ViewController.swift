@@ -10,9 +10,82 @@ import LFHeatMap
 import SMHeatMapView
 import ImageIO
 import MobileCoreServices
+import Foundation
 
+// R1:      [-10, 130, -170, 10, 4, 4]
+// R3:      [-10, 120, -150, 10, 4, 4]
+// R5:      [-110, 10, -90, 0, 4, 4]
+// R7:      [-90, 10, -100, 10, 4, 4]
+// R8:      [-90, 10, -100, 10, 4, 4]
+// R9:      [-90, 10, -70, 10, 4, 4]
+
+// L0:      [-80, 60, 140, 10, 4, 4]
+// L1:      [-20, 140, -140, 10, 4, 4]
+// L3:      [-30, 140, -170, 10, 4, 4]
+
+// Tum5:    [-10, 90, -40, 30, 4, 4]
+// Tum5 01: [-30, 80, -35, 45, 4, 4]
+// Tum5 02: [-10, 50, -20, 30, 4, 4]
+
+// Spiral: [-10, 90, -70, 10, 4, 4]
 // xmin, xmax, ymin, ymax, resolution, square avg size
-let generatorDefaults = [-10, 90, -70, 10, 4, 4]
+
+// Images are saved in this folder + filename + wavelength
+// Ex: /Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res/tum5-30mm-0-amplitude-phase/<850phase, 850amp, etc>
+// Note: Running this program with the same folderName and fileName will overwrite any images currently in there
+// Can change folderName to get around this if you want (e.g. /Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res-take-2/
+let folderName = "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res-roy-floor/"
+let fileName = "tum5-30mm-01-amplitude-phase"
+
+// Once linear interpolation is done, do square averages of NxN millimeters and bicubic interpolations of them
+let squareSizes = [2, 3, 4]
+
+// Images to save in the summary folder.
+// Ex: If this is [2,3] then each wavelength in the summary folder will have 3 images: the raw data plot, the 2x2 interp, and the 3x3 interp
+// Note: Make sure each number in this array is also in the squareSizes array above!
+let summarySizes = [3]
+
+// Pixels per millimeter. Higher value = smaller interpolation steps. Smoother image but longer processing time
+// Don't make this too high or you might start getting gaps in the data plotting which makes interpolation worse
+// Generally keep it around 2-4 for normal runs, 6-8 for super nice pictures (will take a while at 8)
+let interpResolution: Int = 4
+
+// Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
+// For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
+let magnifyingFactor: Int = 2
+
+// If pixels are more than this distance away (in millimeters), don't do linear interpolation between them.
+// Mostly just for images. Can set to something like 100 to make it not do anything but probably don't need to change it
+let maxInterpGap: Double = 30.0
+
+// Skip over the first N points in the CSV file
+// I've generally found that the first 3-5 can have bad data that throw off the heat map so I skip them
+let pointsToSkip = 20
+
+
+
+// Can set to false to only do data plotting and speed things up. Useful for debugging, but you probably won't need it
+let doInterp = true
+
+// Array of 12 different things we wanna plot
+// Can be helpful to comment out some of them if you're trying to get high-res photos for just a few
+// Can set min/max values to throw away any data points that fall outside of those values, useful for more contrast in phase plots
+let xCoordIndex = 72
+let yCoordIndex = 73
+let wavelengthParams = [
+    "690amp": ["min": nil, "max": nil, "csvIndex": 3],
+    "750amp": ["min": nil, "max": nil, "csvIndex": 3+12],
+    "808amp": ["min": nil, "max": nil, "csvIndex": 3+24],
+    "850amp": ["min": nil, "max": nil, "csvIndex": 3+36],
+    "940amp": ["min": nil, "max": nil, "csvIndex": 3+48],
+    "980amp": ["min": nil, "max": nil, "csvIndex": 3+60],
+    "690phase": ["min": 3.7, "max": 4.3, "csvIndex": 8],
+    "750phase": ["min": 3.8, "max": 4.5, "csvIndex": 8+12],
+    "808phase": ["min": 4.6, "max": 5.2, "csvIndex": 8+24],
+    "850phase": ["min": 4.4, "max": 4.9, "csvIndex": 8+36],
+    "940phase": ["min": 3.7, "max": 4.2, "csvIndex": 8+48],
+    "980phase": ["min": 4.8, "max": 5.2, "csvIndex": 8+60],
+]
 
 class ViewController: UIViewController {
     
@@ -24,28 +97,30 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var scaleImage: UIImageView!
     
-    var theGenerator = HeatMapGenerator(
-        minX: generatorDefaults[0],
-        maxX: generatorDefaults[1],
-        minY: generatorDefaults[2],
-        maxY: generatorDefaults[3],
-        resolution: generatorDefaults[4],
-        interpSquareSize: generatorDefaults[5],
-        dangerGap: 30.0,
-        constrainedCubic: true,
-        exponentialWeighted: true
-    )
-    var trueGenerator = HeatMapGenerator(
-        minX: generatorDefaults[0],
-        maxX: generatorDefaults[1],
-        minY: generatorDefaults[2],
-        maxY: generatorDefaults[3],
-        resolution: generatorDefaults[4],
-        interpSquareSize: generatorDefaults[5],
-        dangerGap: 30.0,
-        constrainedCubic: true,
-        exponentialWeighted: true
-    )
+//    var theGenerator = HeatMapGenerator(
+//        minX: generatorDefaults[0],
+//        maxX: generatorDefaults[1],
+//        minY: generatorDefaults[2],
+//        maxY: generatorDefaults[3],
+//        resolution: generatorDefaults[4],
+//        interpSquareSizes: squareSizes,
+//        dangerGap: maxInterpGap,
+//        zCsvIndex: 3,
+//        zFloor: nil,
+//        zCeil: nil
+//    )
+//    var trueGenerator = HeatMapGenerator(
+//        minX: generatorDefaults[0],
+//        maxX: generatorDefaults[1],
+//        minY: generatorDefaults[2],
+//        maxY: generatorDefaults[3],
+//        resolution: generatorDefaults[4],
+//        interpSquareSizes: squareSizes,
+//        dangerGap: maxInterpGap,
+//        zCsvIndex: 2,
+//        zFloor: nil,
+//        zCeil: nil
+//    )
     
     @IBOutlet weak var xminTextField: UITextField!
     @IBOutlet weak var xmaxTextField: UITextField!
@@ -61,26 +136,26 @@ class ViewController: UIViewController {
     @IBAction func textFieldChanged(_ sender: UITextField) {
 //        print("sender=", sender.accessibilityLabel)
 //        print("sender.text=", sender.text)
-        switch sender.accessibilityLabel {
-        case "resolution":
-            theGenerator.resolution = Int(sender.text ?? "4") ?? 4
-        case "interpolation":
-            theGenerator.interpSquareSize = Int(sender.text ?? "20") ?? 10
-        case "xmin":
-            theGenerator.graphMinX = (Int(sender.text ?? "-1")!)
-        case "xmax":
-            theGenerator.graphMaxX = (Int(sender.text ?? "11")!)
-        case "ymin":
-            theGenerator.graphMinY = (Int(sender.text ?? "-1")!)
-        case "ymax":
-            theGenerator.graphMaxY = (Int(sender.text ?? "11")!)
-        case .none:
-            break
-        case .some(_):
-            break
-        }
-        theGenerator.regeneratePlots()
-        setImages()
+//        switch sender.accessibilityLabel {
+//        case "resolution":
+//            theGenerator.resolution = Int(sender.text ?? "4") ?? 4
+//        case "interpolation":
+//            theGenerator.interpSquareSize = Int(sender.text ?? "20") ?? 10
+//        case "xmin":
+//            theGenerator.graphMinX = (Int(sender.text ?? "-1")!)
+//        case "xmax":
+//            theGenerator.graphMaxX = (Int(sender.text ?? "11")!)
+//        case "ymin":
+//            theGenerator.graphMinY = (Int(sender.text ?? "-1")!)
+//        case "ymax":
+//            theGenerator.graphMaxY = (Int(sender.text ?? "11")!)
+//        case .none:
+//            break
+//        case .some(_):
+//            break
+//        }
+//        theGenerator.regeneratePlots()
+        //setImages()
     }
     
     @IBAction func toggleToggled(_ sender: Any) {
@@ -96,154 +171,41 @@ class ViewController: UIViewController {
 //        daImage2.image = theGenerators[genIndex].createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray)
     }
     
-    func setImages() {
-        daImage.image = trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray, showSquares: true)
-        //daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubInterpSizeToArray[4]!, showSquares: true)
+    func setImages(arr1: [[DataPoint?]], arr2: [[DataPoint?]]) {
+//        daImage.image = theGenerator.createHeatMapImageFromDataArray(dataArray: arr1, showSquares: true)
+//        daImage2.image = theGenerator.createHeatMapImageFromDataArray(dataArray: arr2, showSquares: true)
 //        daImage3.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareAverageDataArray, showSquares: false)
 //        daImage4.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray, showSquares: true)
     }
     
     
-    func saveImages(folder: String) {
-        let folderDir = "/Users/eric/Documents/nearwave/twod-heat-map/Images/" + folder + "/"
-        
-        var images: [String: UIImage] = [
-            //"0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
-            "0_rawData": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.heatMapDataArray),
-            "1a_unconstrainedHorizontalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.unconstrainedHorizontalSpline),
-            "1a_unconstrainedVerticalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.unconstrainedVerticalSpline),
-            "1b_constrainedHorizontalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.horizontalSplineInterpolatedDataArray),
-            "1b_constrainedVerticalSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.verticalSplineInterpolatedDataArray),
-            "1b_constrainedDownrightSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downrightDiagonalSplineInterpolatedDataArray),
-            "1b_constrainedDownleftSpline": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downleftDiagonalSplineInterpolatedDataArray),
-            "2a1_linearWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightSplineInterpoaltedDataArray),
-            "2b2_squareWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.splineInterpolatedDataArray),
-            "2c3_cubeWeightedSplineAvg": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightSplineInterpolatedDataArray),
-            "9a_horizontalLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.horizontalLinearInterpolatedDataArray),
-            "9a_verticalLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.verticalLinearInterpolatedDataArray),
-            "9a_downLeftLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downleftDiagonalLinearInterpolatedDataArray),
-            "9a_downRightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.downrightDiagonalLinearInterpolatedDataArray),
-//            "9b1_linearWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightLinearInterpolatedDataArray),
-//            "9b2_squareWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareWeightLinearInterpolatedDataArray),
-//            "9b3_cubeWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightLinearInterpolatedDataArray),
-        ]
-        
-        for i in 0..<theGenerator.squareAverageSizes.count {
-            // Square avg
-            let size = theGenerator.squareAverageSizes[i]
-            let squareFileName = "3" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmSquareAverage"
-            //print(squareFileName)
-            let squareArray = theGenerator.squareAverageSizeToArray[size]!
-            let squareImage = theGenerator.createHeatMapImageFromDataArray(dataArray: squareArray)
-            images[squareFileName] = squareImage
-            
-            // Bicub
-            let bicubFileName = "4" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmBicubicInterpolation"
-            let bicubArray = theGenerator.bicubInterpSizeToArray[size]!
-            let bicubImage = theGenerator.createHeatMapImageFromDataArray(dataArray: bicubArray)
-            images[bicubFileName] = bicubImage
-            //let bicubArray =
-        }
-        
-        for key in Array(images.keys) {
-            let data = images[key]!.pngData()!
-            let filename = URL(fileURLWithPath: folderDir + key + ".png")
-            try? data.write(to: filename)
-        }
-    
-    }
+
 
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // DELAUNAY STUFF
-        // Read x, y, z values for subsampled swirl at resolution = 1
-//        guard let filepath2 = Bundle.main.path(forResource: "eric_gauss_subsample_1x", ofType: "csv") else {
-//            return
-//        }
-//        var csvAsString2 = ""
-//        do {
-//            csvAsString2 = try String(contentsOfFile: filepath2)
-//        } catch {
-//            print(error)
-//            return
-//        }
-//        let csvData2 = csvAsString2.components(separatedBy: "\n")
-//
-//        var swirlPoints: [Point]  = Array(repeating: Point(x: 0, y: 0), count: 792)
-//
-//        for i in 0..<csvData2.count {
-//            let rowData = csvData2[i].components(separatedBy: ",")
-//            if rowData.count == 3 {
-//                let x = Double(rowData[0])!
-//                let y = Double(rowData[1])!
-//                //swirlPoints[i] = Point(x: x, y: y)
-//                let z = 0 - gauss1.getVal(x, y) - gauss2.getVal(x, y)
-//                let sensorDataPoint = SensorData(x: x, y:  y, z: z)
-//                theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
-//            }
-//        }
-        
-//        let testPoints = [
-//            Point(x: 0.0, y: 0.0),
-//            Point(x: 80.0, y: -10.0),
-//            Point(x: 30.0, y: -30.0),
-//            Point(x: 50.0, y: -45.0),
-//            Point(x: 10.0, y: -60.0)
-//        ]
-//
-//        let delaunayGen = DelaunayHeatMapGenerator(points: swirlPoints)
-//        delaunayGen.colorAllTriangles()
-//        daImage.image = delaunayGen.createImageFromPixelArray(delaunayGen.twodPixels)
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         //        let myX : [Double] = [0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 100.0]
         //        let myY : [Double] = [30.0, 130.0, 150.0, 150.0, 170.0, 220.0, 320.0]
         //        let myConstrainedSpline = ConstrainedCubicSpline(xPoints: myX, yPoints: myY)
         
-        xminTextField.text = String(generatorDefaults[0])
-        xminTextField.accessibilityLabel = "xmin"
-        xmaxTextField.text = String(generatorDefaults[1])
-        xmaxTextField.accessibilityLabel = "xmax"
-        yminTextField.text = String(generatorDefaults[2])
-        yminTextField.accessibilityLabel = "ymin"
-        ymaxTextField.text = String(generatorDefaults[3])
-        ymaxTextField.accessibilityLabel = "ymax"
-        resolutionTextField.text = String(generatorDefaults[4])
-        resolutionTextField.accessibilityLabel = "resolution"
-        interpolationTextField.text = String(generatorDefaults[5])
-        interpolationTextField.accessibilityLabel = "interpolation"
-        constrainedCubeToggle.setOn(true, animated: false)
-        constrainedCubeToggle.accessibilityLabel = "constrained"
-        exponentialWeightedToggle.setOn(true, animated: false)
-        exponentialWeightedToggle.accessibilityLabel = "exponential"
+//        xminTextField.text = String(generatorDefaults[0])
+//        xminTextField.accessibilityLabel = "xmin"
+//        xmaxTextField.text = String(generatorDefaults[1])
+//        xmaxTextField.accessibilityLabel = "xmax"
+//        yminTextField.text = String(generatorDefaults[2])
+//        yminTextField.accessibilityLabel = "ymin"
+//        ymaxTextField.text = String(generatorDefaults[3])
+//        ymaxTextField.accessibilityLabel = "ymax"
+//        resolutionTextField.text = String(generatorDefaults[4])
+//        resolutionTextField.accessibilityLabel = "resolution"
+//        interpolationTextField.text = String(generatorDefaults[5])
+//        interpolationTextField.accessibilityLabel = "interpolation"
+//        constrainedCubeToggle.setOn(true, animated: false)
+//        constrainedCubeToggle.accessibilityLabel = "constrained"
+//        exponentialWeightedToggle.setOn(true, animated: false)
+//        exponentialWeightedToggle.accessibilityLabel = "exponential"
         
         
         // Tell apple to fuck off with their image interpolation, mine is better
@@ -260,127 +222,92 @@ class ViewController: UIViewController {
         
         let gauss1 = Gaussian(xCenter: 60.0, yCenter: -15.0, amplitude: 80, sigmaX: 10, sigmaY: 10, theta: 0)
         let gauss2 = Gaussian(xCenter: 35.0, yCenter: -30.0, amplitude: 100, sigmaX: 10, sigmaY: 20, theta: Double.pi / 6.0)
-        
         let daGaussians = [singleGauss]
         
-        // Read the csv file and save each row of data as a triplet
-        let filename = "interpolation-swirl-in-100000-01-amplitude-phase"
-        guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
-            return
-        }
-        var csvAsString = ""
-        do {
-            csvAsString = try String(contentsOfFile: filepath)
-        } catch {
-            print(error)
-            return
-        }
-        let csvData = csvAsString.components(separatedBy: "\n")
-        
-        
-        // Read real csv data for x/y pairs
-        for i in 0..<csvData.count {
-            let rowData = csvData[i].components(separatedBy: ",")
-//            print("rowData.count=", rowData.count)
-//            print(rowData[72])
-//            print(rowData[73])
-            
-            
-            if rowData.count == 75 {
-                let xCoord = 10.0 * Double(rowData[72])!
-                let yCoord = 10.0 * Double(rowData[73])!
-                // For real z values
-                //let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: Double(rowData[3])!)
-                // For gauss values
-                var gaussZ: Double = 0.0
-                for gaussian in daGaussians {
-                    gaussZ -= gaussian.getVal(xCoord, yCoord)
-                }
-                let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: gaussZ)
-                
-                //theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
 
-            }
-        }
-        
-
-        
-        // Subsampled gaussian
-        guard let filepath2 = Bundle.main.path(forResource: "eric_gauss_subsample_2x", ofType: "csv") else {
-            return
-        }
-        var csvAsString2 = ""
-        do {
-            csvAsString2 = try String(contentsOfFile: filepath2)
-        } catch {
-            print(error)
-            return
-        }
-        let csvData2 = csvAsString2.components(separatedBy: "\n")
-
-        //var swirlPoints: [Point]  = Array(repeating: Point(x: 0, y: 0), count: 792)
-        
-        for i in 0..<csvData2.count {
-            let rowData = csvData2[i].components(separatedBy: ",")
-            if rowData.count == 3 {
-                let x = Double(rowData[0])!
-                let y = Double(rowData[1])!
-                //swirlPoints[i] = Point(x: x, y: y)
-                //let z = 0 - gauss1.getVal(x, y) - gauss2.getVal(x, y)
-                var z: Double = 0.0
-                for gaussian in daGaussians {
-                    z -= gaussian.getVal(x, y)
-                }
-                let sensorDataPoint = SensorData(x: x, y:  y, z: z)
-                //theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
-            }
-        }
-        
-        // Tic tac toe sampling
-        let step: Double = 1.0 / Double(generatorDefaults[4])
-        // Vertical lines
-        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: 5) {
-            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: step) {
-                var z: Double = 0.0
-                for gaussian in daGaussians {
-                    z -= gaussian.getVal(Double(x), Double(y))
-                }
-                let point = SensorData(x: Double(x), y: Double(y), z: z)
-                theGenerator.processNewDataPoint(dataPoint: point)
-            }
-        }
-        // Horizontal
-        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: step) {
-            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: 5) {
-                var z: Double = 0.0
-                for gaussian in daGaussians {
-                    z -= gaussian.getVal(Double(x), Double(y))
-                }
-                let point = SensorData(x: Double(x), y: Double(y), z: z)
-                theGenerator.processNewDataPoint(dataPoint: point)
-            }
-        }
-        
+        //let step: Double = 1.0 / Double(generatorDefaults[4])
         // Full Gaussian
-        for x in stride(from: -10, to: 90, by: step) {
-            for y in stride(from: -70, to: 10, by: step) {
-                var z: Double = 0.0
-                for gaussian in daGaussians {
-                    z -= gaussian.getVal(x, y)
-                }
-                let point = SensorData(x: Double(x), y: Double(y), z: z)
-                //trueGenerator.processNewDataPoint(dataPoint: point)
-            }
-        }
+//        for x in stride(from: -10, to: 90, by: step) {
+//            for y in stride(from: -70, to: 10, by: step) {
+//                var z: Double = 0.0
+//                for gaussian in daGaussians {
+//                    z -= gaussian.getVal(x, y)
+//                }
+//                let point = SensorData(x: Double(x), y: Double(y), z: z)
+//                trueGenerator.processNewDataPoint(dataPoint: point)
+//            }
+//        }
         
         //print("points set # is", theGenerator.pointsSet)
-        
 
         
-        theGenerator.processData()
-        setImages()
-        printLineData()
-        //saveImages(folder: "tictactoe/1gauss")
+        //processTicTacToe(gaussians: daGaussians)
+        
+        //theGenerator.printRawData()
+        
+        //processTicTacToe(gaussians: daGaussians)
+        
+        // Read the CSV to get our min and max x and y values
+        let bounds = getXAndYBoundsFromCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex)
+        
+        if bounds == nil {
+            print("Couldn't figure out bounds :(")
+            return
+        }
+        // Set the bounds to round up/down to nearest centimeter and multiply by 10 to convert to mm
+        let graphBounds = [
+            "xMin": 10 * Int(round(bounds!.xMin - 1)),
+            "xMax": 10 * Int(round(bounds!.xMax + 1)),
+            "yMin": 10 * Int(round(bounds!.yMin - 1)),
+            "yMax": 10 * Int(round(bounds!.yMax + 1)),
+        ]
+
+        
+        var daGenerators: [String: HeatMapGenerator] = [:]
+        
+        // Create a HeatMapGenerator for each wavelength we want
+        for key in Array(wavelengthParams.keys) {
+            let params = wavelengthParams[key]!
+            let myGenerator = HeatMapGenerator(
+                minX: graphBounds["xMin"]!,
+                maxX: graphBounds["xMax"]!,
+                minY: graphBounds["yMin"]!,
+                maxY: graphBounds["yMax"]!,
+                resolution: interpResolution,
+                interpSquareSizes: squareSizes,
+                dangerGap: maxInterpGap,
+                zCsvIndex: params["csvIndex"]! as! Int,
+                zFloor: params["min"] as? Double,
+                zCeil: params["max"] as? Double
+            )
+            daGenerators[key] = myGenerator
+            let daGen = daGenerators[key]!
+        }
+        
+        // Process CSV file and store the proper z values in each HeatMapGenerator
+        processCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, daGenerators: daGenerators, gaussians: nil)
+        
+        // For each HeatMapGenerator, process the data, save the images, and clear out our arrays to save memory
+        for key in Array(daGenerators.keys) {
+            let daGen = daGenerators[key]!
+            print(key)
+            daGen.processData(doInterp: doInterp)
+            print("")
+            saveImages(folder: folderName + fileName + "/", key: key, daGen: daGen)
+            //saveInterpsSummary(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res/\(filename)/summary/", daGens: daGenerators)
+            daGen.clearArrays()
+        }
+        
+        
+        print("done!")
+        
+        //theGenerator.processData()
+        
+        // Post Process options
+        //setImages(arr1: theGenerator.unconstrainedVerticalSpline, arr2: theGenerator.verticalSplineInterpolatedDataArray)
+        //saveImages(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast/" + filename + "/850/")
+        //printLineData()
+        
         
         
         //print("estimated row for y=-30")
@@ -395,36 +322,290 @@ class ViewController: UIViewController {
         //printError(daGaussians: daGaussians, xMin: 20, xMax: 80, yMin: -60, yMax: 0)
     }
     
+    func getXAndYBoundsFromCsvFile(filename: String, xIndex: Int, yIndex: Int) -> (xMin: Double, xMax: Double, yMin: Double, yMax: Double)? {
+        var xMin = Double.greatestFiniteMagnitude
+        var xMax = 1.0 - Double.greatestFiniteMagnitude
+        var yMin = Double.greatestFiniteMagnitude
+        var yMax = 1.0 - Double.greatestFiniteMagnitude
+        
+        guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
+            print("Couldn't find CSV file for x/y bounds")
+            return nil
+        }
+        var csvAsString = ""
+        do {
+            csvAsString = try String(contentsOfFile: filepath)
+        } catch {
+            print("Error reading CSV file for x/y bounds")
+            print(error)
+            return nil
+        }
+        let csvData = csvAsString.components(separatedBy: "\n")
+        
+        for i in pointsToSkip+1..<csvData.count-1 {
+            let rowData = csvData[i].components(separatedBy: ",")
+            let xCoord = Double(rowData[xIndex])!
+            let yCoord = Double(rowData[yIndex])!
+            xMin = Double.minimum(xCoord, xMin)
+            xMax = Double.maximum(xCoord, xMax)
+            yMin = Double.minimum(yCoord, yMin)
+            yMax = Double.maximum(yCoord, yMax)
+        }
+        
+        return (xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax)
+    }
+    
+    func processCsvFile(filename: String, xIndex: Int, yIndex: Int, daGenerators: [String : HeatMapGenerator], gaussians: [Gaussian]?) {
+        // Read the csv file and save each row of data as a triplet
+        guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
+            return
+        }
+        var csvAsString = ""
+        do {
+            csvAsString = try String(contentsOfFile: filepath)
+        } catch {
+            print(error)
+            return
+        }
+        let csvData = csvAsString.components(separatedBy: "\n")
+        
+        
+        // Read real csv data for x/y pairs
+        // Skip first few lines cause sometimes the data is mucky.
+        // +1 to skip the header line always, -1 to ignore the last empty line
+        for i in pointsToSkip+1..<csvData.count-1 {
+            let rowData = csvData[i].components(separatedBy: ",")
+            // Multiply by 10 to convert cm to mm
+            let xCoord = 10.0 * Double(rowData[xIndex])!
+            let yCoord = 10.0 * Double(rowData[yIndex])!
+            for key in Array(daGenerators.keys) {
+                let daGen = daGenerators[key]!
+                let z = abs(Double(rowData[daGen.zCsvIndex])!)
+                let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: z)
+                daGen.processNewDataPoint(dataPoint: sensorDataPoint)
+            }
+        }
+    }
+    
+//    func processTicTacToe(gaussians: [Gaussian]) {
+//        let step: Double = 1.0 / Double(generatorDefaults[4])
+//        // Vertical lines
+//        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: 5) {
+//            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: step) {
+//                var z: Double = 0.0
+//                for gaussian in gaussians {
+//                    z -= gaussian.getVal(Double(x), Double(y))
+//                }
+//                let point = SensorData(x: Double(x), y: Double(y), z: z)
+//                //theGenerator.processNewDataPoint(dataPoint: point)
+//            }
+//        }
+//        // Horizontal
+//        for x in stride(from: Double(generatorDefaults[0] + 2), to: Double(generatorDefaults[1]), by: step) {
+//            for y in stride(from: Double(generatorDefaults[2]), to: Double(generatorDefaults[3]), by: 5) {
+//                var z: Double = 0.0
+//                for gaussian in gaussians {
+//                    z -= gaussian.getVal(Double(x), Double(y))
+//                }
+//                let point = SensorData(x: Double(x), y: Double(y), z: z)
+//                //theGenerator.processNewDataPoint(dataPoint: point)
+//            }
+//        }
+//    }
+    
+    func saveImages(folder: String, key: String, daGen: HeatMapGenerator) {
+        // Create individual folder if doesn't exist
+        let fileManager = FileManager.default
+        let folderPath = folder + key + "/"
+        let folderURL = URL(fileURLWithPath: folderPath)
+        let folderExists = (try? folderURL.checkResourceIsReachable()) ?? false
+        do {
+            if !folderExists {
+                try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            }
+        } catch { print(error) }
+        
+        let rawDataImage = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray, showSquares: true, magFactor: magnifyingFactor)
+        
+        var images: [String: UIImage] = [
+            //"0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
+            "0a_rawData": rawDataImage,
+            
+            // Unconstrained + constrained splines
+            "1a1_unconstrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedHorizontalSpline, showSquares: true, magFactor: magnifyingFactor),
+            //"1a2_constrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalSplineInterpolatedDataArray),
+            "1b1_unconstrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedVerticalSpline, showSquares: true, magFactor: magnifyingFactor),
+            //"1b2_constrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.verticalSplineInterpolatedDataArray),
+            "1c1_unconstrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownrightDiagonalSpline, showSquares: true, magFactor: magnifyingFactor),
+            //"1c2_constrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downrightDiagonalSplineInterpolatedDataArray),
+            "1d1_unconstrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownleftDiagonalSpline, showSquares: true, magFactor: magnifyingFactor),
+            //"1d2_constrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downleftDiagonalSplineInterpolatedDataArray),
+            
+            // Weighted averages of linear, constrained, unconstrained
+            //"2a1_linearWeightedLinearAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.linearWeightLinearInterpolatedDataArray),
+            //"2a2_linearWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.linearWeightSplineInterpoaltedDataArray),
+            
+            //"2b1_squareWeightedLinearAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.squareWeightLinearInterpolatedDataArray),
+            //"2b2_squareWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.splineInterpolatedDataArray),
+            
+            //"2c1_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.cubicWeightSplineInterpolatedDataArray),
+            "2c2_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.cubicWeightSplineInterpolatedDataArray, showSquares: true, magFactor: magnifyingFactor),
+            
+            //
+            //"9a1_horizontalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalLinearInterpolatedDataArray),
+            //"9a2_verticalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.verticalLinearInterpolatedDataArray),
+            //"9a3_downRightLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downrightDiagonalLinearInterpolatedDataArray),
+            //"9a4_downLeftLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downleftDiagonalLinearInterpolatedDataArray),
+            //"9b1_linearWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightLinearInterpolatedDataArray),
+            //"9b2_squareWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareWeightLinearInterpolatedDataArray),
+            //"9b3_cubeWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightLinearInterpolatedDataArray),
+        ]
+        
+        
+        // Square averages and bicubic interps of them
+        for i in 0..<daGen.squareAverageSizes.count {
+            // Square avg
+            let size = daGen.squareAverageSizes[i]
+            let squareFileName = "3" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmSquareAverage"
+            //print(squareFileName)
+            let squareArray = daGen.squareAverageSizeToArray[size]!
+            let squareImage = daGen.createHeatMapImageFromDataArray(dataArray: squareArray, showSquares: true, magFactor: magnifyingFactor)
+            images[squareFileName] = squareImage
+
+            // Bicub
+            let bicubFileName = "4" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmBicubicInterpolation"
+            let bicubArray = daGen.bicubInterpSizeToArray[size]!
+            let bicubImage = daGen.createHeatMapImageFromDataArray(dataArray: bicubArray, showSquares: true, magFactor: magnifyingFactor)
+            images[bicubFileName] = bicubImage
+        }
+        
+        // Save files in local folder
+        for wavelength in Array(images.keys) {
+            let data = images[wavelength]!.pngData()!
+            let filename = URL(fileURLWithPath: folderPath + wavelength + ".png")
+            try? data.write(to: filename)
+        }
+        
+        saveSummaryImages(folder: folder + "summary/", key: key, daGen: daGen)
+    
+    }
+    
+    func saveSummaryImages(folder: String, key: String, daGen: HeatMapGenerator) {
+        // Create folder if doesn't exist
+        let fileManager = FileManager.default
+        let folderURL = URL(fileURLWithPath: folder)
+        let folderExists = (try? folderURL.checkResourceIsReachable()) ?? false
+        do {
+            if !folderExists {
+                try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            }
+        } catch { print(error) }
+        
+        var images: [String: UIImage] = [:]
+        
+        // Add raw data image
+        let rawImageName = "\(key)_a_raw.png"
+        images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray, showSquares: true, magFactor: magnifyingFactor)
+        // Add interp images
+        for size in summarySizes {
+            let interpImageName = "\(key)_b_\(size)x\(size).png"
+            images[interpImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.bicubInterpSizeToArray[size]!, showSquares: true, magFactor: magnifyingFactor)
+        }
+        
+        for imageName in Array(images.keys) {
+            let data = images[imageName]!.pngData()!
+            let filename = URL(fileURLWithPath: folder + imageName)
+            try? data.write(to: filename)
+        }
+    
+    }
+    
+    func saveInterpsSummary(folder: String, daGens: [String : HeatMapGenerator]) {
+        // Create folder if doesn't exist
+        let fileManager = FileManager.default
+        let folderURL = URL(fileURLWithPath: folder)
+        let folderExists = (try? folderURL.checkResourceIsReachable()) ?? false
+        do {
+            if !folderExists {
+                try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            }
+        } catch { print(error) }
+        
+        var images: [String: UIImage] = [:]
+        
+        var fileContents = ""
+        
+        for key in Array(daGens.keys).sorted() {
+            let daGen = daGens[key]!
+            // Add raw data image
+            let rawImageName = "\(key)_a_raw.png"
+            images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray)
+            // Add interp image
+            let interpImageName = "\(key)_b_2x2.png"
+            images[interpImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.bicubInterpSizeToArray[2]!)
+            
+            // Add min/max z values for text file
+            fileContents += key + "\n"
+            fileContents += "minZ=" + String(daGen.minZ) + "\n"
+            fileContents += "maxZ=" + String(daGen.maxZ) + "\n\n"
+        }
+        
+        for imageName in Array(images.keys) {
+            let data = images[imageName]!.pngData()!
+            let filename = URL(fileURLWithPath: folder + imageName)
+            try? data.write(to: filename)
+        }
+        
+        
+        let zValuesPath = URL(fileURLWithPath: folder + "/zvalues.txt")
+        fileManager.createFile(atPath: folder + "/zvalues.txt", contents: nil)
+        
+        do {
+            try fileContents.write(to: zValuesPath, atomically: true, encoding: String.Encoding.utf8)
+        } catch {
+            // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
+        }
+    
+    }
+    
     func printLineData() {
-        print("raw linear, x=50")
-        theGenerator.printColumnData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, xInMm: 50.0)
-        print("")
+//        print("true, x=50")
+//        trueGenerator.printColumnData(dataArray: trueGenerator.heatMapDataArray, xInMm: 50.0)
+//        print("")
+//
+//        print("true, y=-30")
+//        trueGenerator.printRowData(dataArray: trueGenerator.heatMapDataArray, yInMm: -30.0)
+//        print("")
         
-        print("raw linear, y=-30")
-        theGenerator.printRowData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, yInMm: -30.0)
-        print("")
-        
-        print("raw unconstrained, x=50")
-        theGenerator.printColumnData(dataArray: theGenerator.unconstrainedVerticalSpline, xInMm: 50.0)
-        print("")
-        
-        print("raw unconstrained, y=-30")
-        theGenerator.printRowData(dataArray: theGenerator.unconstrainedHorizontalSpline, yInMm: -30.0)
-        print("")
-        
-        print("raw constrained, x=50")
-        theGenerator.printColumnData(dataArray: theGenerator.verticalSplineInterpolatedDataArray, xInMm: 50.0)
-        print("")
-        
-        print("raw constrained, y=-30")
-        theGenerator.printRowData(dataArray: theGenerator.horizontalSplineInterpolatedDataArray, yInMm: -30.0)
-        print("")
+//        print("raw linear, x=50")
+//        theGenerator.printColumnData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, xInMm: 50.0)
+//        print("")
+//
+//        print("raw linear, y=-30")
+//        theGenerator.printRowData(dataArray: theGenerator.verticalLinearInterpolatedDataArray, yInMm: -30.0)
+//        print("")
+//
+//        print("raw unconstrained, x=50")
+//        theGenerator.printColumnData(dataArray: theGenerator.unconstrainedVerticalSpline, xInMm: 50.0)
+//        print("")
+//
+//        print("raw unconstrained, y=-30")
+//        theGenerator.printRowData(dataArray: theGenerator.unconstrainedHorizontalSpline, yInMm: -30.0)
+//        print("")
+//
+//        print("raw constrained, x=50")
+//        theGenerator.printColumnData(dataArray: theGenerator.verticalSplineInterpolatedDataArray, xInMm: 50.0)
+//        print("")
+//
+//        print("raw constrained, y=-30")
+//        theGenerator.printRowData(dataArray: theGenerator.horizontalSplineInterpolatedDataArray, yInMm: -30.0)
+//        print("")
         
     }
     
-    func printError(daGaussians: [Gaussian], xMin: Int, xMax: Int, yMin: Int, yMax: Int) {
+    func printError(daGaussians: [Gaussian], xMin: Int, xMax: Int, yMin: Int, yMax: Int, daGen: HeatMapGenerator) {
         print("Error for unconstrained horizontal cubic spline")
-        theGenerator.calculateError(interpArray: theGenerator.unconstrainedHorizontalSpline,
+        daGen.calculateError(interpArray: daGen.unconstrainedHorizontalSpline,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -433,7 +614,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for constrained horizontal cubic spline")
-        theGenerator.calculateError(interpArray: theGenerator.horizontalSplineInterpolatedDataArray,
+        daGen.calculateError(interpArray: daGen.horizontalSplineInterpolatedDataArray,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -442,7 +623,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for unconstrained vertical cubic spline")
-        theGenerator.calculateError(interpArray: theGenerator.unconstrainedVerticalSpline,
+        daGen.calculateError(interpArray: daGen.unconstrainedVerticalSpline,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -451,7 +632,7 @@ class ViewController: UIViewController {
         print("")
 
         print("Error for constrained vertical cubic spline")
-        theGenerator.calculateError(interpArray: theGenerator.verticalSplineInterpolatedDataArray,
+        daGen.calculateError(interpArray: daGen.verticalSplineInterpolatedDataArray,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -460,7 +641,7 @@ class ViewController: UIViewController {
         print("")
 
         print("Error for linear weighted cubic")
-        theGenerator.calculateError(interpArray: theGenerator.linearWeightSplineInterpoaltedDataArray,
+        daGen.calculateError(interpArray: daGen.linearWeightSplineInterpoaltedDataArray,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -469,7 +650,7 @@ class ViewController: UIViewController {
         print("")
 
         print("Error for exponential weighted cubic")
-        theGenerator.calculateError(interpArray: theGenerator.splineInterpolatedDataArray,
+        daGen.calculateError(interpArray: daGen.splineInterpolatedDataArray,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -480,7 +661,7 @@ class ViewController: UIViewController {
         //print("Error for square average")
         
         print("Error for bicubic interp 1mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[1]!,
+        daGen.calculateError(interpArray: daGen.bicubInterpSizeToArray[1]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -489,7 +670,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for bicubic interp 2mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[2]!,
+        daGen.calculateError(interpArray: daGen.bicubInterpSizeToArray[2]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -498,7 +679,7 @@ class ViewController: UIViewController {
         print("")
         
         print("Error for bicubic interp 4mm")
-        theGenerator.calculateError(interpArray: theGenerator.bicubInterpSizeToArray[4]!,
+        daGen.calculateError(interpArray: daGen.bicubInterpSizeToArray[4]!,
                                     gaussians: daGaussians,
                                     xMin: xMin,
                                     xMax: xMax,
@@ -558,3 +739,34 @@ public struct SensorData {
     var y: Double
     var z: Double
 }
+
+// Subsampled gaussian
+//guard let filepath2 = Bundle.main.path(forResource: "eric_gauss_subsample_2x", ofType: "csv") else {
+//    return
+//}
+//var csvAsString2 = ""
+//do {
+//    csvAsString2 = try String(contentsOfFile: filepath2)
+//} catch {
+//    print(error)
+//    return
+//}
+//let csvData2 = csvAsString2.components(separatedBy: "\n")
+//
+////var swirlPoints: [Point]  = Array(repeating: Point(x: 0, y: 0), count: 792)
+//
+//for i in 0..<csvData2.count {
+//    let rowData = csvData2[i].components(separatedBy: ",")
+//    if rowData.count == 3 {
+//        let x = Double(rowData[0])!
+//        let y = Double(rowData[1])!
+//        //swirlPoints[i] = Point(x: x, y: y)
+//        //let z = 0 - gauss1.getVal(x, y) - gauss2.getVal(x, y)
+//        var z: Double = 0.0
+//        for gaussian in daGaussians {
+//            z -= gaussian.getVal(x, y)
+//        }
+//        let sensorDataPoint = SensorData(x: x, y:  y, z: z)
+//        //theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
+//    }
+//}

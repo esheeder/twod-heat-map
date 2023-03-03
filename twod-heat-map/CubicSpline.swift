@@ -2,7 +2,6 @@
 //  CubicSpline.swift
 //  twod-heat-map
 //
-//  Created by Eric on 2/10/23.
 //
 
 import Foundation
