@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0711E4EC29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0711E4EB29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv */; };
+		0711E4F029BBD04400B70F86 /* eric_spiral_subsample_2x.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0711E4EF29BBD04400B70F86 /* eric_spiral_subsample_2x.csv */; };
+		071F671A29C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 071F671929C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */; };
 		07897252299177F300B81626 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897251299177F300B81626 /* AppDelegate.swift */; };
 		07897254299177F300B81626 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897253299177F300B81626 /* SceneDelegate.swift */; };
 		07897256299177F300B81626 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897255299177F300B81626 /* ViewController.swift */; };
@@ -20,18 +23,7 @@
 		078972872991975C00B81626 /* HeatMapGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972862991975C00B81626 /* HeatMapGenerator.swift */; };
 		0789728F2997444400B81626 /* CubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0789728E2997444300B81626 /* CubicSpline.swift */; };
 		07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */; };
-		0789729B299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */; };
 		078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972A2299DAA9F00B81626 /* Gaussian.swift */; };
-		078972EE29AC2F1900B81626 /* DelaunayHeatMapGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972ED29AC2F1900B81626 /* DelaunayHeatMapGenerator.swift */; };
-		078972F929AC30A900B81626 /* Circumcircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F029AC30A800B81626 /* Circumcircle.swift */; };
-		078972FA29AC30A900B81626 /* Edge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F129AC30A900B81626 /* Edge.swift */; };
-		078972FB29AC30A900B81626 /* Point.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F229AC30A900B81626 /* Point.swift */; };
-		078972FC29AC30A900B81626 /* CDT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F329AC30A900B81626 /* CDT.swift */; };
-		078972FD29AC30A900B81626 /* Polygon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F429AC30A900B81626 /* Polygon.swift */; };
-		078972FE29AC30A900B81626 /* ConformingDelaunay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F529AC30A900B81626 /* ConformingDelaunay.swift */; };
-		078972FF29AC30A900B81626 /* PointNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F629AC30A900B81626 /* PointNode.swift */; };
-		0789730029AC30A900B81626 /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F729AC30A900B81626 /* Triangle.swift */; };
-		0789730129AC30A900B81626 /* Delaunay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972F829AC30A900B81626 /* Delaunay.swift */; };
 		82DAC4EC52FA98B80CB65FD3 /* Pods_twod_heat_map.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +45,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0711E4EB29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "tum5-30mm-0-amplitude-phase.csv"; sourceTree = "<group>"; };
+		0711E4EF29BBD04400B70F86 /* eric_spiral_subsample_2x.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = eric_spiral_subsample_2x.csv; sourceTree = "<group>"; };
+		071F671829C11E6A003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; lastKnownFileType = text; name = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		071F671929C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
 		0789724E299177F300B81626 /* twod-heat-map.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "twod-heat-map.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07897251299177F300B81626 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		07897253299177F300B81626 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -70,18 +66,7 @@
 		078972862991975C00B81626 /* HeatMapGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatMapGenerator.swift; sourceTree = "<group>"; };
 		0789728E2997444300B81626 /* CubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubicSpline.swift; sourceTree = "<group>"; };
 		07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstrainedCubicSpline.swift; sourceTree = "<group>"; };
-		0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
 		078972A2299DAA9F00B81626 /* Gaussian.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gaussian.swift; sourceTree = "<group>"; };
-		078972ED29AC2F1900B81626 /* DelaunayHeatMapGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelaunayHeatMapGenerator.swift; sourceTree = "<group>"; };
-		078972F029AC30A800B81626 /* Circumcircle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Circumcircle.swift; sourceTree = "<group>"; };
-		078972F129AC30A900B81626 /* Edge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Edge.swift; sourceTree = "<group>"; };
-		078972F229AC30A900B81626 /* Point.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Point.swift; sourceTree = "<group>"; };
-		078972F329AC30A900B81626 /* CDT.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CDT.swift; sourceTree = "<group>"; };
-		078972F429AC30A900B81626 /* Polygon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Polygon.swift; sourceTree = "<group>"; };
-		078972F529AC30A900B81626 /* ConformingDelaunay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConformingDelaunay.swift; sourceTree = "<group>"; };
-		078972F629AC30A900B81626 /* PointNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PointNode.swift; sourceTree = "<group>"; };
-		078972F729AC30A900B81626 /* Triangle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
-		078972F829AC30A900B81626 /* Delaunay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Delaunay.swift; sourceTree = "<group>"; };
 		2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_twod_heat_map.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		28BADDFF7FC75334A48E2C93 /* Pods-twod-heat-map.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.debug.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.debug.xcconfig"; sourceTree = "<group>"; };
 		3F748DE0FDDF7CA75A4BE95C /* Pods-twod-heat-map.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.release.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.release.xcconfig"; sourceTree = "<group>"; };
@@ -118,7 +103,6 @@
 			children = (
 				07A5DB3929B15E6B00979D53 /* CSVs */,
 				0789730429AEAD3300B81626 /* Images */,
-				078972EF29AC30A800B81626 /* Delaunay */,
 				07897250299177F300B81626 /* twod-heat-map */,
 				0789726A299177F500B81626 /* twod-heat-mapTests */,
 				07897274299177F500B81626 /* twod-heat-mapUITests */,
@@ -150,11 +134,9 @@
 				07897262299177F500B81626 /* Info.plist */,
 				0789725A299177F300B81626 /* twod_heat_map.xcdatamodeld */,
 				078972862991975C00B81626 /* HeatMapGenerator.swift */,
-				0789729A299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */,
 				0789728E2997444300B81626 /* CubicSpline.swift */,
 				07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */,
 				078972A2299DAA9F00B81626 /* Gaussian.swift */,
-				078972ED29AC2F1900B81626 /* DelaunayHeatMapGenerator.swift */,
 			);
 			path = "twod-heat-map";
 			sourceTree = "<group>";
@@ -176,23 +158,6 @@
 			path = "twod-heat-mapUITests";
 			sourceTree = "<group>";
 		};
-		078972EF29AC30A800B81626 /* Delaunay */ = {
-			isa = PBXGroup;
-			children = (
-				078972F029AC30A800B81626 /* Circumcircle.swift */,
-				078972F129AC30A900B81626 /* Edge.swift */,
-				078972F229AC30A900B81626 /* Point.swift */,
-				078972F329AC30A900B81626 /* CDT.swift */,
-				078972F429AC30A900B81626 /* Polygon.swift */,
-				078972F529AC30A900B81626 /* ConformingDelaunay.swift */,
-				078972F629AC30A900B81626 /* PointNode.swift */,
-				078972F729AC30A900B81626 /* Triangle.swift */,
-				078972F829AC30A900B81626 /* Delaunay.swift */,
-			);
-			name = Delaunay;
-			path = "../../../Downloads/Delaunay-main/Sources/Delaunay";
-			sourceTree = "<group>";
-		};
 		0789730429AEAD3300B81626 /* Images */ = {
 			isa = PBXGroup;
 			children = (
@@ -211,6 +176,10 @@
 		07A5DB3929B15E6B00979D53 /* CSVs */ = {
 			isa = PBXGroup;
 			children = (
+				0711E4EB29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv */,
+				0711E4EF29BBD04400B70F86 /* eric_spiral_subsample_2x.csv */,
+				071F671929C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */,
+				071F671829C11E6A003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */,
 			);
 			path = CSVs;
 			sourceTree = "<group>";
@@ -340,8 +309,10 @@
 			files = (
 				07897261299177F500B81626 /* LaunchScreen.storyboard in Resources */,
 				0789725E299177F500B81626 /* Assets.xcassets in Resources */,
+				071F671A29C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */,
+				0711E4F029BBD04400B70F86 /* eric_spiral_subsample_2x.csv in Resources */,
+				0711E4EC29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv in Resources */,
 				07897259299177F300B81626 /* Main.storyboard in Resources */,
-				0789729B299AFB6A00B81626 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -408,24 +379,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				078972FA29AC30A900B81626 /* Edge.swift in Sources */,
 				07897256299177F300B81626 /* ViewController.swift in Sources */,
 				07897252299177F300B81626 /* AppDelegate.swift in Sources */,
-				078972EE29AC2F1900B81626 /* DelaunayHeatMapGenerator.swift in Sources */,
-				0789730029AC30A900B81626 /* Triangle.swift in Sources */,
 				0789725C299177F300B81626 /* twod_heat_map.xcdatamodeld in Sources */,
-				078972FE29AC30A900B81626 /* ConformingDelaunay.swift in Sources */,
-				078972F929AC30A900B81626 /* Circumcircle.swift in Sources */,
-				078972FD29AC30A900B81626 /* Polygon.swift in Sources */,
 				07897254299177F300B81626 /* SceneDelegate.swift in Sources */,
 				078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */,
-				078972FF29AC30A900B81626 /* PointNode.swift in Sources */,
-				0789730129AC30A900B81626 /* Delaunay.swift in Sources */,
-				078972FB29AC30A900B81626 /* Point.swift in Sources */,
 				078972872991975C00B81626 /* HeatMapGenerator.swift in Sources */,
 				07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */,
 				0789728F2997444400B81626 /* CubicSpline.swift in Sources */,
-				078972FC29AC30A900B81626 /* CDT.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
