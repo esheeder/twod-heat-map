@@ -303,7 +303,10 @@ class ViewController: UIViewController {
         for key in Array(daGenerators.keys) {
             let daGen = daGenerators[key]!
             //print(key)
-            daGen.processData(doInterp: doInterp)
+            Task {
+                await daGen.processData(doInterp: doInterp)
+            }
+            
 
             //saveInterpsSummary(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res/\(filename)/summary/", daGens: daGenerators)
             //daGen.clearArrays()
@@ -324,7 +327,7 @@ class ViewController: UIViewController {
         }
         
         
-        print("done!")
+        //print("\ndone!")
         
         //theGenerator.processData()
         

@@ -129,7 +129,7 @@ public class HeatMapGenerator {
             }
         }
         
-        processData()
+        //processData()
     }
     
     // Called once all interp is done to free up memory
@@ -213,7 +213,7 @@ public class HeatMapGenerator {
     }
     
     // PROCESS DATA HERE
-    public func processData (doInterp: Bool = true) {
+    public func processData (doInterp: Bool = true) async {
 //        print("pointsAdded=", pointsAdded)
 //        print("lowPointsDiscarded=", lowPointsDiscarded)
 //        print("highPointsDiscarded=", highPointsDiscarded)
@@ -223,10 +223,31 @@ public class HeatMapGenerator {
             //performLinearInterpolation()
             // .units(allowed:[.milliseconds]))
             let totalStart = Date()
+            
+//            let taskGroupSplineStart = Date()
+//            let done = await performTaskGroupSplineInterpolation()
+//            let taskGroupSplineEnd = Date()
+//            print("task group spline:", Int(taskGroupSplineEnd.timeIntervalSince(taskGroupSplineStart) * 1000), "ms")
+            
+            let operationSplineStart = Date()
+            performOperationSplineInterpolation()
+            let operationSplineEnd = Date()
+            print("operation spline:", Int(operationSplineEnd.timeIntervalSince(operationSplineStart) * 1000), "ms")
+            
+//            let dispatchSplineStart = Date()
+//            performDispatchSplineInterpolation()
+//            let dispatchSplineEnd = Date()
+//            print("dispatch spline:", Int(dispatchSplineEnd.timeIntervalSince(dispatchSplineStart) * 1000), "ms")
+            
+//            let taskSplineStart = Date()
+//            performTaskSplineInterpolation()
+//            let taskSplineEnd = Date()
+//            print("task spline:", Int(taskSplineEnd.timeIntervalSince(taskSplineStart) * 1000), "ms")
+            
             let splineStart = Date()
             performSplineInterpolation()
             let splineEnd = Date()
-            print("spline:", Int(splineEnd.timeIntervalSince(splineStart) * 1000), "ms")
+            print("old spline:", Int(splineEnd.timeIntervalSince(splineStart) * 1000), "ms")
             
             let weightedStart = Date()
             performSplineWeightedAverage()
@@ -234,7 +255,6 @@ public class HeatMapGenerator {
             print("weighted:", Int(weightedEnd.timeIntervalSince(weightedStart) * 1000), "ms")
             
             for size in squareAverageSizes {
-                print("")
                 let squareStart = Date()
                 
                 self.interpSquareSize = size
@@ -262,7 +282,6 @@ public class HeatMapGenerator {
                     
 
                 }
-            print("")
             let totalEnd = Date()
             print("TOTAL TIME:", Int(totalEnd.timeIntervalSince(totalStart) * 1000), "ms")
             
@@ -343,28 +362,180 @@ public class HeatMapGenerator {
         self.maxZ = Double.maximum(self.maxZ, dataPoint.z)
     }
     
+    public func performTaskGroupSplineInterpolation() async -> Bool {
+        return await withTaskGroup(of: Void.self) { taskGroup in
+            print("BEFORE Y LOOP")
+            for y in 0..<heatMapDataArray.count {
+                taskGroup.addTask{
+                    self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
+                    self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+                    self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+                }
+//                taskGroup.addTask{
+//                    self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+//                }
+//                taskGroup.addTask{
+//                    self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+//                }
+                // Down right
+                //taskGroup.addTask{}
+                // Down left
+                //taskGroup.addTask{}
+            }
+            print("BEFORE X LOOP")
+            for x in 0..<heatMapDataArray[0].count {
+                taskGroup.addTask{
+                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
+                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
+                    self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
+                }
+                // Down right
+                //taskGroup.addTask{}
+                // Down left
+                //taskGroup.addTask{}
+            }
+            print("ABOUT TO WAIT")
+            await taskGroup.waitForAll()
+            //sleep(3)
+            print("ABOUT TO RETURN")
+            return true
+        }
+    }
+    
+    public func performDispatchSplineInterpolation() {
+        //let concurrentQueue = DispatchQueue(label: "swiftlee.concurrent.queue", attributes: .concurrent)
+
+        
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.concurrentPerform(iterations: self.heatMapDataArray.count) { y in
+                // Horizontal
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+            }
+            DispatchQueue.concurrentPerform(iterations: self.heatMapDataArray[0].count) { x in
+                // Vertical
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
+            }
+            
+            DispatchQueue.main.async {
+                print("dispatch done")
+                // all done
+            }
+        }
+
+    }
+    
+    public func performTaskSplineInterpolation() {
+        for y in 0..<heatMapDataArray.count {
+            Task(priority: .userInitiated) {
+                // Horizontal
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+            }
+
+        }
+        for x in 0..<heatMapDataArray[0].count {
+            Task(priority: .userInitiated) {
+                // Vertical
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
+            }
+        }
+    }
+    
+    public func performOperationSplineInterpolation() {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 8  // a max of 4 tasks at a time
+
+//        let completion = BlockOperation {
+//            print("operations all done")
+//        }
+
+        for y in 0..<heatMapDataArray.count{
+            let operation = BlockOperation {
+                // Horizontal
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+            }
+            
+            queue.addOperation(operation)
+        }
+        
+//        queue.addBarrierBlock {
+//            DispatchQueue.main.async {
+//                print("y all done")
+//            }
+//        }
+        
+        for x in 0..<heatMapDataArray[0].count {
+            let operation = BlockOperation {
+                // Vertical
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
+                // Down right
+                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
+                // Down left
+                self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
+            }
+            queue.addOperation(operation)
+
+        }
+
+        queue.addBarrierBlock {
+            DispatchQueue.main.async {
+                print("x all done")
+                
+            }
+        }
+        print("ABOUT TO WAIT")
+        queue.waitUntilAllOperationsAreFinished()
+        print("DONE WAITING")
+    }
+    
     public func performSplineInterpolation() {
+
+        //let queue = DispatchQueue(label: "daqueue", attributes: .concurrent)
         for y in 0..<heatMapDataArray.count {
             // Horizontal
-            cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
+            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0)
             // Down right
-            cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
+            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1)
             // Down left
-            cubicSplineInterpolateLine(startX: heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
+            self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1, startY: y, xDir: -1, yDir: 1)
         }
         for x in 0..<heatMapDataArray[0].count {
             // Vertical
-            cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
+            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1)
             // Down right
-            cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
+            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1)
             // Down left
-            cubicSplineInterpolateLine(startX: heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
+            self.cubicSplineInterpolateLine(startX: self.heatMapDataArray[0].count - 1 - x, startY: 0, xDir: -1, yDir: 1)
         }
         //fuckyou()
         
     }
     
     public func cubicSplineInterpolateLine(startX: Int, startY: Int, xDir: Int, yDir: Int) {
+        //print("START x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
+//        if startX == 100 {
+//            print("break here")
+//        }
         var tPoints : [Double] = []
         var zValues : [Double] = []
         var minT = 10000000
@@ -373,10 +544,10 @@ public class HeatMapGenerator {
         for t in 0..<100000 {
             let xCoord = startX + t * xDir
             let yCoord = startY + t * yDir
-            if xCoord >= heatMapDataArray[0].count || yCoord >= heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
+            if xCoord >= self.heatMapDataArray[0].count || yCoord >= self.heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
                 break
             }
-            let val = heatMapDataArray[yCoord][xCoord]?.value
+            let val = self.heatMapDataArray[yCoord][xCoord]?.value
             // Only add values that are more than 2mm away from the previous one
             if val != nil && (t - lastT) > 2 * self.resolution {
                 tPoints.append(Double(t))
@@ -391,7 +562,7 @@ public class HeatMapGenerator {
         
         if tPoints.count >= 3 {
             let unconstrainedSpliner = CubicSpline(xPoints: tPoints, yPoints: zValues)
-            let spliner = ConstrainedCubicSpline(xPoints: tPoints, yPoints: zValues, maxDistance: self.dangerGap * Double(resolution))
+            let spliner = ConstrainedCubicSpline(xPoints: tPoints, yPoints: zValues, maxDistance: self.dangerGap * Double(self.resolution))
             for t in minT..<maxT {
                 //print("spline interp at x=", i, "y=", y, "is", spliner.interpolate(Double(i)))
                 let constrainedValues = spliner.interpolate(Double(t))
@@ -403,22 +574,23 @@ public class HeatMapGenerator {
                     let wildValue = unconstrainedSpliner.interpolate(Double(t))
                     
                     if xDir == 0 {
-                        constrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-                        unconstrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: wildValue, distance: distance)
+                        //self.constrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
+                        //self.unconstrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: wildValue, distance: distance)
                     } else if yDir == 0 {
-                        constrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-                        unconstrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
+                        //self.constrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
+                        //self.unconstrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
                     } else if xDir * yDir > 0 {
-                        constrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-                        unconstrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
+                        //self.constrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
+                        //self.unconstrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
                     } else {
-                        constrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-                        unconstrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
+                        //self.constrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
+                        //self.unconstrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
                     }
                 }
 
             }
         }
+        //print("END x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
     }
     
     public func fuckyou() {
@@ -584,6 +756,7 @@ public class HeatMapGenerator {
                 if pointsTallied > 0 {
                     let average = localSum / Double(pointsTallied)
                     let newPoint = WeightedDataPoint(value: average, samplesTaken: 0)
+                    //squareAverageSizeToArray[squareSize]![y * squareSize * resolution + j][x * squareSize * resolution + i] = newPoint
                     for i in 0..<squareSize * resolution {
                         for j in 0..<squareSize * resolution {
                             squareAverageSizeToArray[squareSize]![y * squareSize * resolution + j][x * squareSize * resolution + i] = newPoint
