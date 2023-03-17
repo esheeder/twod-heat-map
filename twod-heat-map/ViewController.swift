@@ -52,11 +52,11 @@ let interpResolution: Int = 2
 
 // Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
 // For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
-let magnifyingFactor: Int = 1
+let magnifyingFactor: Int = 2
 
 // If pixels are more than this distance away (in millimeters), don't do linear interpolation between them.
 // Mostly just for images. Can set to something like 100 to make it not do anything but probably don't need to change it
-let maxInterpGap: Double = 30.0
+let maxInterpGap: Double = 100.0
 
 // Skip over the first N points in the CSV file
 // I've generally found that the first 3-5 can have bad data that throw off the heat map so I skip them
@@ -176,6 +176,40 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+//        let allT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33, 34]
+//        let allZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34, 35]
+//
+//        let oldSpliner = CubicSpline(xPoints: allT, yPoints: allZ)
+//        let newSpliner = HeatMapSpline(tPoints: allT, zPoints: allZ, indexCount: 100)
+//
+//        let someT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33]
+//        let someZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34]
+//
+//        let partialSpliner = HeatMapSpline(tPoints: someT, zPoints: someZ, indexCount: 100, minIndexGap: 0.0)
+//        
+//        for i in stride(from: someT.first!, through: someT.last!, by: 1.0) {
+//            if newSpliner.zCalcs[Int(i)]!.value != partialSpliner.zCalcs[Int(i)]!.value {
+//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value, "diff!")
+//            } else {
+//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value)
+//            }
+//
+//        }
+//
+//        partialSpliner.addPoints(newTs: [34.0], newZs: [35.0])
+//
+//        for i in stride(from: allT.first!, through: allT.last!, by: 1.0) {
+//            if newSpliner.zCalcs[Int(i)]!.value != partialSpliner.zCalcs[Int(i)]!.value {
+//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value, "diff!")
+//            } else {
+//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value)
+//            }
+//
+//        }
+        
+//        for i in stride(from: allT.first!, through: allT.last!, by: 1.0) {
+//            print(i, oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value)
+//        }
         
         //        let myX : [Double] = [0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 100.0]
         //        let myY : [Double] = [30.0, 130.0, 150.0, 150.0, 170.0, 220.0, 320.0]
@@ -303,16 +337,14 @@ class ViewController: UIViewController {
         for key in Array(daGenerators.keys) {
             let daGen = daGenerators[key]!
             //print(key)
-            Task {
-                await daGen.processData(doInterp: doInterp)
-            }
+            daGen.processData(doInterp: doInterp)
             
 
             //saveInterpsSummary(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res/\(filename)/summary/", daGens: daGenerators)
             //daGen.clearArrays()
             
             //print("")
-            //saveImages(folder: folderName + fileName + "/", key: key, daGen: daGen)
+            saveImages(folder: folderName + fileName + "/", key: key, daGen: daGen)
 //            print("raw data")
 //            daGen.printRawData()
 //            print("")
@@ -328,14 +360,6 @@ class ViewController: UIViewController {
         
         
         //print("\ndone!")
-        
-        //theGenerator.processData()
-        
-        // Post Process options
-        //setImages(arr1: theGenerator.unconstrainedVerticalSpline, arr2: theGenerator.verticalSplineInterpolatedDataArray)
-        //saveImages(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast/" + filename + "/850/")
-        
-        
         
     }
     
@@ -469,30 +493,30 @@ class ViewController: UIViewController {
             "0a_rawData": rawDataImage,
             
             // Unconstrained + constrained splines
-            "1a1_unconstrainedHorizontal": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedHorizontal, showSquares: true, magFactor: magnifyingFactor),
-            "1a2_constrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedHorizontal, magFactor: magnifyingFactor),
-            "1b1_unconstrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedVertical, showSquares: true, magFactor: magnifyingFactor),
-            "1b2_constrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedVertical, magFactor: magnifyingFactor),
-            "1c1_unconstrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownright, showSquares: true, magFactor: magnifyingFactor),
-            "1c2_constrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownright, magFactor: magnifyingFactor),
-            "1d1_unconstrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownleft, showSquares: true, magFactor: magnifyingFactor),
-            "1d2_constrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownleft, magFactor: magnifyingFactor),
+            //"1a1_unconstrainedHorizontal": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedHorizontal, showSquares: true, magFactor: magnifyingFactor),
+            //"1a2_constrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedHorizontal, magFactor: magnifyingFactor),
+            //"1b1_unconstrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedVertical, showSquares: true, magFactor: magnifyingFactor),
+            //"1b2_constrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedVertical, magFactor: magnifyingFactor),
+            //"1c1_unconstrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownright, showSquares: true, magFactor: magnifyingFactor),
+            //"1c2_constrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownright, magFactor: magnifyingFactor),
+            //"1d1_unconstrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownleft, showSquares: true, magFactor: magnifyingFactor),
+            //"1d2_constrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownleft, magFactor: magnifyingFactor),
             
             // Weighted averages of linear, constrained, unconstrained
             //"2a1_linearWeightedLinearAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.linearWeightLinearInterpolatedDataArray),
-            //"2a2_linearWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.linearWeightSplineInterpoaltedDataArray),
+            //"2a2_linearWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.firstOrderWeightedUnconstrained),
             
             //"2b1_squareWeightedLinearAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.squareWeightLinearInterpolatedDataArray),
-            //"2b2_squareWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.splineInterpolatedDataArray),
+            //"2b2_squareWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.secondOrderWeightedUnconstrained),
             
             //"2c1_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.cubicWeightSplineInterpolatedDataArray),
-            "2c2_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.thirdOrderWeightedUnconstrained, showSquares: true, magFactor: magnifyingFactor),
+            "2c2_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.splinerWeightedAvg, showSquares: true, magFactor: magnifyingFactor),
             
             //
-            "9a1_horizontalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalLinear, magFactor: magnifyingFactor),
-            "9a2_verticalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.verticalLinear, magFactor: magnifyingFactor),
-            "9a3_downRightLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downrightDiagonalLinear, magFactor: magnifyingFactor),
-            "9a4_downLeftLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downleftDiagonalLinear, magFactor: magnifyingFactor),
+            //"9a1_horizontalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalLinear, magFactor: magnifyingFactor),
+            //"9a2_verticalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.verticalLinear, magFactor: magnifyingFactor),
+            //"9a3_downRightLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downrightDiagonalLinear, magFactor: magnifyingFactor),
+            //"9a4_downLeftLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.downleftDiagonalLinear, magFactor: magnifyingFactor),
             //"9b1_linearWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.linearWeightLinearInterpolatedDataArray),
             //"9b2_squareWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.squareWeightLinearInterpolatedDataArray),
             //"9b3_cubeWeightLinear": theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.cubicWeightLinearInterpolatedDataArray),
@@ -503,10 +527,11 @@ class ViewController: UIViewController {
         for i in 0..<daGen.squareAverageSizes.count {
             // Square avg
             let size = daGen.squareAverageSizes[i]
+            // 97 = a, 98 = b, etc.
             let squareFileName = "3" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmSquareAverage"
             //print(squareFileName)
             let squareArray = daGen.squareAverageSizeToArray[size]!
-            let squareImage = daGen.createHeatMapImageFromDataArray(dataArray: squareArray, showSquares: true, magFactor: magnifyingFactor)
+            let squareImage = daGen.createHeatMapImageFromDataArray(dataArray: squareArray, showSquares: true, magFactor: magnifyingFactor * interpResolution * size)
             images[squareFileName] = squareImage
 
             // Bicub

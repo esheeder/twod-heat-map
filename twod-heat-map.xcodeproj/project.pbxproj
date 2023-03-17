@@ -24,6 +24,7 @@
 		0789728F2997444400B81626 /* CubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0789728E2997444300B81626 /* CubicSpline.swift */; };
 		07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */; };
 		078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078972A2299DAA9F00B81626 /* Gaussian.swift */; };
+		07F2564129C3779200A2767E /* HeatMapSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07F2564029C3779200A2767E /* HeatMapSpline.swift */; };
 		82DAC4EC52FA98B80CB65FD3 /* Pods_twod_heat_map.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */; };
 /* End PBXBuildFile section */
 
@@ -67,6 +68,7 @@
 		0789728E2997444300B81626 /* CubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubicSpline.swift; sourceTree = "<group>"; };
 		07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstrainedCubicSpline.swift; sourceTree = "<group>"; };
 		078972A2299DAA9F00B81626 /* Gaussian.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gaussian.swift; sourceTree = "<group>"; };
+		07F2564029C3779200A2767E /* HeatMapSpline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatMapSpline.swift; sourceTree = "<group>"; };
 		2011A8C09BB1AAC73698477A /* Pods_twod_heat_map.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_twod_heat_map.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		28BADDFF7FC75334A48E2C93 /* Pods-twod-heat-map.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.debug.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.debug.xcconfig"; sourceTree = "<group>"; };
 		3F748DE0FDDF7CA75A4BE95C /* Pods-twod-heat-map.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-twod-heat-map.release.xcconfig"; path = "Target Support Files/Pods-twod-heat-map/Pods-twod-heat-map.release.xcconfig"; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 				0789728E2997444300B81626 /* CubicSpline.swift */,
 				07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */,
 				078972A2299DAA9F00B81626 /* Gaussian.swift */,
+				07F2564029C3779200A2767E /* HeatMapSpline.swift */,
 			);
 			path = "twod-heat-map";
 			sourceTree = "<group>";
@@ -386,6 +389,7 @@
 				078972A3299DAA9F00B81626 /* Gaussian.swift in Sources */,
 				078972872991975C00B81626 /* HeatMapGenerator.swift in Sources */,
 				07897295299AF7F100B81626 /* ConstrainedCubicSpline.swift in Sources */,
+				07F2564129C3779200A2767E /* HeatMapSpline.swift in Sources */,
 				0789728F2997444400B81626 /* CubicSpline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
