@@ -58,12 +58,20 @@ public class HeatMapGenerator {
     var uprightSpliners: [HeatMapSpline] = []
     
     // Stored weighted values of the above spliners
-    var splinerWeightedAvg: [[InterpolatedDataPoint?]] = [[]]
+    var splinerWeightedAvg: [[WeightedDataPoint]] = [[]]
+    
+    // Single arrays for live action since idk how to get parallel working with arrays in a map yet
+    var theOneSquareAverageArray: [[WeightedDataPoint]] = [[]]
+    var theOneBicubArray: [[WeightedDataPoint]] = [[]]
+    
+    var pixelsArray: [PixelData] = []
     
     // For each square size, need a square average array and bicub interp array
     var squareAverageSizes: [Int] = [3, 4]
     var squareAverageSizeToArray: [Int: [[WeightedDataPoint]]] = [:]
     var bicubInterpSizeToArray: [Int: [[WeightedDataPoint?]]] = [:]
+    
+
     
     // Contain pre-calculated square and cubic values for numbers between 0 and 1 based on interpSquareSize.
     // Useful for the bicubic function to make it faster
@@ -115,6 +123,7 @@ public class HeatMapGenerator {
         self.zCeil = zCeil
         
         resetArrays()
+        precalcCubicValues(step: self.interpSquareSize)
     }
     
     // Call this when an input parameter changes
@@ -161,27 +170,30 @@ public class HeatMapGenerator {
                 . . . . .   ->  . .\. . .   ->  . . . .\.
                 \ . . . .       . . \ . .       . . . . \
              
-                upleftSpliners[400-599] will start 1 pixel up from bottom right, going up
+                upleftSpliners[400-599] will start from bottom right, going up
                    [400]           [500]          [598]
                  . . . \ .       . . . .\.      . . . . \
                  . . . .\.   ->  . . . . \  ->  . . . . .
                  . . . . \       . . . . .      . . . . .
              
-                 uprightSpliners[0-399] will start bottom left, going right
-                    [0]             [200]          [399]
-                 . / . . .       . . . / .       . . . . .
-                 ./. . . .   ->  . . ./. .   ->  . . . . .
-                 / . . . .       . . / . .       . . . . /
+                 uprightSpliners[0-199] will start top left, going right
+                    [0]             [100]          [199]
+                 / . . . .       ./. . . .       . / . . .
+                 . . . . .   ->  / . . . .   ->  ./. . . .
+                 . . . . .       . . . . .       / . . . .
              
-                uprightSpliners[400-599] will start 1 pixel down from bottom left, going up
-                    [400]           [500]          [598]
-                  . / . . .       ./. . . .      / . . . .
-                  ./. . . .   ->  / . . . .  ->  . . . . .
-                  / . . . .       . . . . .      . . . . .
+                uprightSpliners[200-599] will start from bottom left, going right
+                    [200]           [400]          [598]
+                  . / . . .       . . . / .      . . . . .
+                  ./. . . .   ->  . . ./. .  ->  . . . . .
+                  / . . . .       . . / . .      . . . . /
+             
+                Technically there is a duplication in each direction from the corner but that's ok
+                because the added work is negligible and it makes the code much easier to handle
              */
             // TODO: indexCount on these can be computed to save memory
-            upleftSpliners = [HeatMapSpline](repeating: HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight)), count: pixelWidth + pixelHeight - 1)
-            uprightSpliners = [HeatMapSpline](repeating: HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight)), count: pixelWidth + pixelHeight - 1)
+            upleftSpliners = [HeatMapSpline](repeating: HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight)), count: pixelWidth + pixelHeight)
+            uprightSpliners = [HeatMapSpline](repeating: HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight)), count: pixelWidth + pixelHeight)
             for i in 0..<upleftSpliners.count {
                 upleftSpliners[i] = HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight))
                 uprightSpliners[i] = HeatMapSpline(tPoints: [], zPoints: [], indexCount: max(pixelWidth, pixelHeight))
@@ -191,12 +203,48 @@ public class HeatMapGenerator {
             // TODO: Need to implement some sort of "updateZVals" in the HeatMapSpliner class, shouldn't be hard at all
         }
         
-        splinerWeightedAvg = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: pixelWidth), count: pixelHeight)
-
+        splinerWeightedAvg = [[WeightedDataPoint]](repeating: [WeightedDataPoint](repeating: WeightedDataPoint(value: 0.0, samplesTaken: 0), count: pixelWidth), count: pixelHeight)
+        for y in 0..<pixelHeight {
+            for x in 0..<pixelWidth {
+                splinerWeightedAvg[y][x] = WeightedDataPoint(value: 0.0, samplesTaken: 0)
+            }
+        }
+        
+        theOneSquareAverageArray = [[WeightedDataPoint]](repeating: [WeightedDataPoint](repeating: WeightedDataPoint(value: 0.0, samplesTaken: 0), count: (graphMaxX - graphMinX) / self.interpSquareSize), count: (graphMaxY - graphMinY) / self.interpSquareSize)
+        for i in 0..<theOneSquareAverageArray.count {
+            for j in 0..<theOneSquareAverageArray[0].count {
+                theOneSquareAverageArray[i][j] = WeightedDataPoint(value: 0.0, samplesTaken: 0)
+            }
+        }
+        
+        theOneBicubArray = [[WeightedDataPoint]](repeating: [WeightedDataPoint](repeating: WeightedDataPoint(value: 0.0, samplesTaken: 0), count: pixelWidth), count: pixelHeight)
+        for i in 0..<theOneBicubArray.count {
+            for j in 0..<theOneBicubArray[0].count {
+                theOneBicubArray[i][j] = WeightedDataPoint(value: 0.0, samplesTaken: 0)
+            }
+        }
+        
+        // Mag factor of 2
+        pixelsArray = [PixelData](repeating: PixelData(a: 0, r: 0, g: 0, b: 0), count: pixelWidth * pixelHeight * 2 * 2)
+        for i in 0..<pixelsArray.count {
+            pixelsArray[i] = PixelData(a: 0, r: 0, g: 0, b: 0)
+        }
 
         for squareSize in squareAverageSizes {
             squareAverageSizeToArray[squareSize] = [[WeightedDataPoint]](repeating: [WeightedDataPoint](repeating: WeightedDataPoint(value: 0.0, samplesTaken: 0), count: (graphMaxX - graphMinX) / squareSize), count: (graphMaxY - graphMinY) / squareSize)
+            var daArray = squareAverageSizeToArray[squareSize]!
+            for i in 0..<daArray.count {
+                for j in 0..<daArray[0].count {
+                    daArray[i][j] = WeightedDataPoint(value: 0.0, samplesTaken: 0)
+                }
+            }
             bicubInterpSizeToArray[squareSize] = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: pixelWidth), count: pixelHeight)
+            var daOtherArray = bicubInterpSizeToArray[squareSize]!
+            for i in 0..<daOtherArray.count {
+                for j in 0..<daOtherArray[0].count {
+                    daOtherArray[i][j] = WeightedDataPoint(value: 0.0, samplesTaken: 0)
+                }
+            }
         }
                
         // IMAGE GENERATION ONLY
@@ -235,6 +283,7 @@ public class HeatMapGenerator {
 //        print("lowPointsDiscarded=", lowPointsDiscarded)
 //        print("highPointsDiscarded=", highPointsDiscarded)
         if doInterp {
+            
 //            print("minZ=", self.minZ)
 //            print("maxZ=", self.maxZ)
             let totalStart = Date()
@@ -242,7 +291,7 @@ public class HeatMapGenerator {
             let dispatchSplineStart = Date()
             performDispatchQueueSplineInterpolation()
             let dispatchSplineEnd = Date()
-            print("dispatch queue spline:", Int(dispatchSplineEnd.timeIntervalSince(dispatchSplineStart) * 1000), "ms")
+            //print("dispatch queue spline:", Int(dispatchSplineEnd.timeIntervalSince(dispatchSplineStart) * 1000), "ms")
             
 //            let splineStart = Date()
 //            performSplineInterpolation()
@@ -252,38 +301,32 @@ public class HeatMapGenerator {
             let weightedStart = Date()
             performWeightedAverage()
             let weightedEnd = Date()
-            print("weighted:", Int(weightedEnd.timeIntervalSince(weightedStart) * 1000), "ms")
+            //print("weighted:", Int(weightedEnd.timeIntervalSince(weightedStart) * 1000), "ms")
             
-            for size in squareAverageSizes {
-                let squareStart = Date()
-                
-                self.interpSquareSize = size
-                //print("square size:", size)
-                
-                precalcCubicValues(step: size)
-                
-                let avgStart = Date()
-                createSquareAverages(squareSize: size)
-                let avgEnd = Date()
-                print("square average:", Int(avgEnd.timeIntervalSince(avgStart) * 1000), "ms")
-                
-                fillInSquareAverages(squareSize: size)
-
-//                let bicubStart = Date()
-//                performBicubicInterpolation(squareSizeInMm: size)
-//                let bicubEnd = Date()
-//                print("bicubic:", Int(bicubEnd.timeIntervalSince(bicubStart) * 1000), "ms")
-                
-                let imageStart = Date()
-                createHeatMapImageFromDataArray(dataArray: bicubInterpSizeToArray[size]!)
-                let imageEnd = Date()
-                print("image creation time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
-
-                let squareEnd = Date()
-                //print(Int(squareEnd.timeIntervalSince(squareStart) * 1000))
-                    
-
-                }
+            
+            let avgStart = Date()
+            createSquareAverages(squareSize: self.interpSquareSize)
+            let avgEnd = Date()
+            //print("square average:", Int(avgEnd.timeIntervalSince(avgStart) * 1000), "ms")
+            
+            let bicubStart = Date()
+            performBicubicInterpolation(squareSizeInMm: self.interpSquareSize)
+            let bicubEnd = Date()
+            //print("bicubic:", Int(bicubEnd.timeIntervalSince(bicubStart) * 1000), "ms")
+            
+//            let oldImageStart = Date()
+//            createHeatMapImageFromDataArray(dataArray: theOneBicubArray)
+//            let oldImageEnd = Date()
+//            print("old image creation time:", Int(oldImageEnd.timeIntervalSince(oldImageStart) * 1000), "ms")
+            
+//            let imageStart = Date()
+//            createLiveImage()
+//            let imageEnd = Date()
+//            print("image creation time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
+            
+//            for size in squareAverageSizes {
+//                self.interpSquareSize = size
+//            }
             let totalEnd = Date()
             //print("TOTAL TIME:", Int(totalEnd.timeIntervalSince(totalStart) * 1000), "ms")
             
@@ -296,120 +339,215 @@ public class HeatMapGenerator {
         }
     }
     
+    public func performDispatchQueueSplineInterpolation() {
+        let pixelWidth = self.heatMapDataArray[0].count
+        let pixelHeight = self.heatMapDataArray.count
+        DispatchQueue.concurrentPerform(iterations: pixelHeight) {y in
+            // Horizontal
+            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
+            // Up left
+            self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.upleftSpliners[pixelWidth + y])
+            // Up right
+            self.cubicSplineInterpolateLine(startX: 0, startY: (pixelHeight - 1 - y), xDir: 1, yDir: 1, spliner: self.uprightSpliners[y])
+        }
+        DispatchQueue.concurrentPerform(iterations: pixelWidth) {x in
+            // Vertical
+            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
+            // Up left
+            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: -1, yDir: 1, spliner: self.upleftSpliners[x])
+            // Up right
+            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1, spliner: self.uprightSpliners[pixelHeight + x])
+        }
+    }
+    
+    // startX and startY should be index values
+    public func cubicSplineInterpolateLine(startX: Int, startY: Int, xDir: Int, yDir: Int, spliner: HeatMapSpline) {
+        //print("START x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
+        if !spliner.shouldUpdate {
+            return
+        }
+        var tPoints : [Double] = []
+        var zValues : [Double] = []
+//        var minT = 10000000
+//        var maxT = 0
+        var lastT = -10
+        // TODO: Clean this up, can do something like spliner.maxIndex once those are computed
+        for t in 0..<100000 {
+            let xCoord = startX + t * xDir
+            let yCoord = startY + t * yDir
+            if xCoord >= self.heatMapDataArray[0].count || yCoord >= self.heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
+                break
+            }
+            let val = self.heatMapDataArray[yCoord][xCoord]?.value
+            // Only add values that are more than 2mm away from the previous one
+            if val != nil && (t - lastT) > 2 * self.resolution {
+                tPoints.append(Double(t))
+                zValues.append(val!)
+                lastT = t
+                //maxT = t
+//                if minT == 10000000 {squareAverageSizeToArray
+//                    minT = t
+//                }
+            }
+        }
+        
+        spliner.setPoints(newTs: tPoints, newZs: zValues)
+        spliner.shouldUpdate = false
+        
+        //print("END x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
+    }
+    
     public func performWeightedAverage() {
-        for x in stride(from: 0, to: Double(heatMapDataArray[0].count), by: 1.0) {
-            let verticalSpliner = verticalSpliners[Int(x)]
-            for y in stride(from: 0, to: Double(heatMapDataArray.count), by: 1.0) {
-                var numerator = 0.0
-                var denominator = 0.0
-                var haveAVal = false
+        let imageWidth = heatMapDataArray[0].count
+        let imageHeight = heatMapDataArray.count
+        
+        DispatchQueue.concurrentPerform(iterations: imageWidth * imageHeight) {i in
+            weightPixel(x: i % imageWidth, y: i / imageWidth, imageHeight: imageHeight, imageWidth: imageWidth)
+        }
+    }
+    
+    public func weightPixel(x: Int, y: Int, imageHeight: Int, imageWidth: Int) {
+        var numerator = 0.0
+        var denominator = 0.0
+        var valuesUsed = 0
 
-//                if let verticalInfo = verticalSpliner.interpolate(y) {
-//                    haveAVal = true
-//                    let cubed = pow(verticalInfo.distance, 3)
-//                    numerator += verticalInfo.value / cubed
-//                    denominator += 1.0 / cubed
-//                }
-//                if let horizontalInfo = horizontalSpliners[Int(y)].interpolate(x) {
-//                    haveAVal = true
-//                    let cubed = pow(horizontalInfo.distance, 3)
-//                    numerator += horizontalInfo.value / cubed
-//                    denominator += 1.0 / cubed
-//                }
-                // TODO: Add these in
-                // Downright spliners that start at bottom
-                if x >= y {
-                    if let diag1Val = upleftSpliners[Int(x - y)].interpolate(y) {
-                        haveAVal = true
-                        let cubed = pow(diag1Val.distance, 3)
-                        numerator += diag1Val.value / cubed
-                        denominator += 1.0 / cubed
-                    }
-                } else {
-                    
+        if let verticalInfo = verticalSpliners[x].zCalcs[y] {
+            valuesUsed += 1
+            let cubed = pow(verticalInfo.distance, 3)
+            numerator += verticalInfo.value / cubed
+            denominator += 1.0 / cubed
+        }
+        if let horizontalInfo = horizontalSpliners[Int(y)].zCalcs[x] {
+            valuesUsed += 1
+            let cubed = pow(horizontalInfo.distance, 3)
+            numerator += horizontalInfo.value / cubed
+            denominator += 1.0 / cubed
+        }
+        // Upleft spliners that start at bottom
+        if x + y <= imageWidth {
+            if let diag1Val = upleftSpliners[x + y].zCalcs[y] {
+                valuesUsed += 1
+                let cubed = pow(diag1Val.distance * 1.41, 3) // 1.41 = sqrt(2) approx
+                numerator += diag1Val.value / cubed
+                denominator += 1.0 / cubed
+            }
+        } else {
+            // Upleft spliners that start on the right
+            if let diag1Val = upleftSpliners[x + y + 1].zCalcs[imageWidth - x - 1] {
+                valuesUsed += 1
+                let cubed = pow(diag1Val.distance * 1.41, 3) // 1.41 = sqrt(2) approx
+                numerator += diag1Val.value / cubed
+                denominator += 1.0 / cubed
+            }
+        }
+        
+        // Upright spliners that start at left
+        if y >= x {
+            if let diag2Val = uprightSpliners[Int(imageHeight - 1 + x - y)].zCalcs[x] {
+                valuesUsed += 1
+                let cubed = pow(diag2Val.distance * 1.41, 3)
+                numerator += diag2Val.value / cubed
+                denominator += 1.0 / cubed
+            }
+        } else {
+            // Upright spliners that start on the bottom
+            if let diag2Val = uprightSpliners[Int(imageHeight + x - y)].zCalcs[y] {
+                valuesUsed += 1
+                let cubed = pow(diag2Val.distance * 1.41, 3)
+                numerator += diag2Val.value / cubed
+                denominator += 1.0 / cubed
+            }
+        }
+        if valuesUsed > 0 {
+            splinerWeightedAvg[y][x] = WeightedDataPoint(value: numerator / denominator, samplesTaken: valuesUsed)
+        }
+    }
+    
+    
+    public func createSquareAverages(squareSize: Int) {
+        let horizontalIterations = (graphMaxX - graphMinX) / squareSize
+        let verticalIterations = (graphMaxY - graphMinY) / squareSize
+        
+        DispatchQueue.concurrentPerform(iterations: horizontalIterations * verticalIterations) {i in
+            averageSquare(x: i % horizontalIterations, y: i / horizontalIterations, squareSize: squareSize)
+        }
+        
+//        for x in 0..<horizontalIterations {
+//            for y in 0..<verticalIterations {
+//                averageSquare(x: x, y: y, squareSize: squareSize)
+//            }
+//        }
+    }
+    
+    // Loop through data in chunks of size x size and set the corresponding pixel in the squareAverageArray
+    private func averageSquare(x: Int, y: Int, squareSize: Int) {
+        var localSum : Double = 0.0
+        var pointsTallied = 0
+        // Loop over square to sum values
+        for i in 0..<squareSize * resolution {
+            for j in 0..<squareSize * resolution {
+                let z = splinerWeightedAvg[y * squareSize * resolution + j][x * squareSize * resolution + i]
+                if z.samplesTaken > 0 {
+                    localSum += z.value
+                    pointsTallied += 1
                 }
-
-//                if let diag2Val = ?? {
-//
-//                }
-
-                if haveAVal {
-                    splinerWeightedAvg[Int(y)][Int(x)] = InterpolatedDataPoint(value: numerator / denominator, distance: 0.0)
+            }
+        }
+        //print("pointsTallied=", pointsTallied)
+        if pointsTallied > 0 {
+            let average = localSum / Double(pointsTallied)
+            theOneSquareAverageArray[y][x] = WeightedDataPoint(value: average, samplesTaken: pointsTallied)
+        } else {
+            theOneSquareAverageArray[y][x] = WeightedDataPoint(value: self.minZ, samplesTaken: 0)
+        }
+    }
+    
+    // TODO: Some sort of recursive function that fills in empty squares based on neighbor values
+    private func fillInSquareAverages(squareSize: Int) {
+        var daArray = theOneSquareAverageArray
+        for x in 0..<daArray[0].count {
+            for y in 0..<daArray.count {
+                if daArray[y][x].samplesTaken == 0 {
+                    let newPoint = WeightedDataPoint(value: self.minZ, samplesTaken: 0)
+                    daArray[y][x] = newPoint
                 }
             }
         }
     }
     
-//    public func performUnconstrainedSplineWeightedAverage() {
-//        for x in 0..<heatMapDataArray[0].count {
-//            for y in 0..<heatMapDataArray.count {
-//                let verticalVal = unconstrainedVertical[y][x]
-//                let horizontalVal = unconstrainedHorizontal[y][x]
-//                let diag1Val = unconstrainedDownright[y][x]
-//                let diag2Val = unconstrainedDownleft[y][x]
-//
-//                // Linear, Square, Cubic
-//                var numerators: [Double] = [0.0, 0.0, 0.0]
-//                var denominators: [Double] = [0.0, 0.0, 0.0]
-//                var haveAVal = false
-//
-//                if verticalVal != nil {
-//                    haveAVal = true
-//                    let myVal = verticalVal!
-//                    numerators[0] += myVal.value / myVal.distance
-//                    numerators[1] += myVal.value / pow(myVal.distance, 2)
-//                    numerators[2] += myVal.value / pow(myVal.distance, 3)
-//
-//                    denominators[0] += 1.0 / myVal.distance
-//                    denominators[1] += 1.0 / pow(myVal.distance, 2)
-//                    denominators[2] += 1.0 / pow(myVal.distance, 3)
-//                }
-//                if horizontalVal != nil {
-//                    haveAVal = true
-//                    let myVal = horizontalVal!
-//                    numerators[0] += myVal.value / myVal.distance
-//                    numerators[1] += myVal.value / pow(myVal.distance, 2)
-//                    numerators[2] += myVal.value / pow(myVal.distance, 3)
-//
-//                    denominators[0] += 1.0 / myVal.distance
-//                    denominators[1] += 1.0 / pow(myVal.distance, 2)
-//                    denominators[2] += 1.0 / pow(myVal.distance, 3)
-//                }
-//                if diag1Val != nil {
-//                    haveAVal = true
-//                    let myVal = diag1Val!
-//                    numerators[0] += myVal.value / myVal.distance
-//                    numerators[1] += myVal.value / pow(myVal.distance, 2)
-//                    numerators[2] += myVal.value / pow(myVal.distance, 3)
-//
-//                    denominators[0] += 1.0 / myVal.distance
-//                    denominators[1] += 1.0 / pow(myVal.distance, 2)
-//                    denominators[2] += 1.0 / pow(myVal.distance, 3)
-//                }
-//                if diag2Val != nil {
-//                    haveAVal = true
-//                    let myVal = diag2Val!
-//                    numerators[0] += myVal.value / myVal.distance
-//                    numerators[1] += myVal.value / pow(myVal.distance, 2)
-//                    numerators[2] += myVal.value / pow(myVal.distance, 3)
-//
-//                    denominators[0] += 1.0 / myVal.distance
-//                    denominators[1] += 1.0 / pow(myVal.distance, 2)
-//                    denominators[2] += 1.0 / pow(myVal.distance, 3)
-//                }
-//
-//                if haveAVal {
-//                    let linWeightedVal = numerators[0] / denominators[0]
-//                    let squareWeightedVal = numerators[1] / denominators[1]
-//                    let cubeWeightedVal = numerators[2] / denominators[2]
-//
-//                    firstOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: linWeightedVal, distance: 0.0)
-//                    secondOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: squareWeightedVal, distance: 0.0)
-//                    thirdOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: cubeWeightedVal, distance: 0.0)
+//    public func performBlahblah() {
+//        for i in 0..<horizontalSpliners.count {
+//            let daSpliner = horizontalSpliners[i]
+//            if daSpliner.t.count > 3 {
+//                for j in Int(daSpliner.t.first!)..<Int(daSpliner.t.last!) {
+//                    print daSpliner.zCalcs[j]
 //                }
 //            }
+//
 //        }
 //    }
+    
+    public func getSplinerForPixel(xIndex: Int, yIndex: Int, direction: String) -> HeatMapSpline {
+        if direction == "horizontal" {
+            return horizontalSpliners[yIndex]
+        } else if direction == "vertical" {
+            return verticalSpliners[xIndex]
+        } else if direction == "upleft" {
+            if xIndex + yIndex < heatMapDataArray[0].count {
+                return upleftSpliners[xIndex + yIndex]
+            }
+            return upleftSpliners[xIndex + yIndex + 1]
+        } else if direction == "upright" {
+            if yIndex >= xIndex {
+                return uprightSpliners[heatMapDataArray.count - 1 + xIndex - yIndex]
+            }
+            return uprightSpliners[heatMapDataArray.count + xIndex - yIndex]
+        }
+        print("hmmm, probably shouldn't be here")
+        return horizontalSpliners[0]
+    }
+    
+
     
     // Print out raw x, y, z coordinates for CSV
     public func printRawData() {
@@ -447,6 +585,8 @@ public class HeatMapGenerator {
 //            print("heatMapDataArray.count=", heatMapDataArray.count)
             return
         }
+        
+        
         //print(dataPoint.z)
         
         if self.zFloor != nil && dataPoint.z < self.zFloor! {
@@ -469,125 +609,14 @@ public class HeatMapGenerator {
         }
         
 
-        
+        verticalSpliners[xIndex].shouldUpdate = true
+        horizontalSpliners[yIndex].shouldUpdate = true
+        getSplinerForPixel(xIndex: xIndex, yIndex: yIndex, direction: "upleft").shouldUpdate = true
+        getSplinerForPixel(xIndex: xIndex, yIndex: yIndex, direction: "upright").shouldUpdate = true
         self.minZ = Double.minimum(self.minZ, dataPoint.z)
         self.maxZ = Double.maximum(self.maxZ, dataPoint.z)
     }
     
-    public func performTaskGroupSplineInterpolation() async -> Bool {
-        
-        await withTaskGroup(of: Void.self) { taskGroup in
-            print("BEFORE Y LOOP")
-            let pixelWidth = self.heatMapDataArray[0].count
-            for y in 0..<heatMapDataArray.count {
-                taskGroup.addTask{
-                    // Horizontal
-                    self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
-                    // Down right
-                    self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1, spliner: self.upleftSpliners[pixelWidth + y])
-                    // Down left
-                    self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.uprightSpliners[pixelWidth + y])
-                }
-            }
-            print("BEFORE X LOOP")
-            for x in 0..<heatMapDataArray[0].count {
-                taskGroup.addTask{
-                    // Vertical
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
-                    // Down right
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1, spliner: self.upleftSpliners[x])
-                    // Down left
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: -1, yDir: 1, spliner: self.uprightSpliners[x])
-                }
-            }
-            await taskGroup.waitForAll()
-            return true
-        }
-    }
-    
-    public func performDispatchGroupSplineInterpolation() {
-        let dispatchSplineStart = Date()
-        
-        //let concurrentQueue = DispatchQueue(label: "swiftlee.concurrent.queue", attributes: .concurrent)
-        let pixelWidth = self.heatMapDataArray[0].count
-        let group = DispatchGroup()
-        DispatchQueue.global(qos: .userInitiated).async {
-            for y in 0..<self.heatMapDataArray.count{
-                group.enter()
-                // Horizontal
-                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
-                // Down right
-                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1, spliner: self.upleftSpliners[pixelWidth + y])
-                // Down left
-                self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.uprightSpliners[pixelWidth + y])
-                group.leave()
-            }
-            for x in 0..<self.heatMapDataArray[0].count {
-                group.enter()
-                    // Vertical
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
-                    // Down right
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1, spliner: self.upleftSpliners[x])
-                    // Down left
-                    self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: -1, yDir: 1, spliner: self.uprightSpliners[x])
-                group.leave()
-            }
-        }
-        
-        group.notify(queue: .main) {
-            let dispatchSplineEnd = Date()
-            print("dispatch spline:", Int(dispatchSplineEnd.timeIntervalSince(dispatchSplineStart) * 1000), "ms")
-        }
-        
-//        DispatchQueue.global(qos: .userInitiated).async {
-//
-//            DispatchQueue.concurrentPerform(iterations: self.heatMapDataArray.count) { y in
-//                // Horizontal
-//                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
-//                // Down right
-//                self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1, spliner: self.upleftSpliners[pixelWidth + y])
-//                // Down left
-//                self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.uprightSpliners[pixelWidth + y])
-//            }
-//            DispatchQueue.concurrentPerform(iterations: self.heatMapDataArray[0].count) { x in
-//                // Vertical
-//                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
-//                // Down right
-//                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1, spliner: self.upleftSpliners[x])
-//                // Down left
-//                self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: -1, yDir: 1, spliner: self.uprightSpliners[x])
-//            }
-//
-//            DispatchQueue.main.async {
-//                print("dispatch done")
-//                // all done
-//            }
-//        }
-        
-
-    }
-    
-    public func performDispatchQueueSplineInterpolation() {
-        let pixelWidth = self.heatMapDataArray[0].count
-        let pixelHeight = self.heatMapDataArray.count
-        DispatchQueue.concurrentPerform(iterations: pixelHeight) {y in
-            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
-            // Down right
-//            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 1, spliner: self.upleftSpliners[pixelWidth + y])
-            // Down left
-//            self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.downleftSpliners[pixelWidth + y])
-        }
-        DispatchQueue.concurrentPerform(iterations: pixelWidth) {x in
-            // Vertical
-            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
-            // Down right
-            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 1, yDir: 1, spliner: self.upleftSpliners[x])
-            // Down left
-//            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: -1, yDir: 1, spliner: self.downleftSpliners[x])
-        }
-      
-
-    }
     
     public func performOperationSplineInterpolation() {
         let queue = OperationQueue()
@@ -657,113 +686,8 @@ public class HeatMapGenerator {
 //        }
 //
 //    }
-    
-    // startX and startY should be index values
-    public func cubicSplineInterpolateLine(startX: Int, startY: Int, xDir: Int, yDir: Int, spliner: HeatMapSpline) {
-        //print("START x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
-        var tPoints : [Double] = []
-        var zValues : [Double] = []
-//        var minT = 10000000
-//        var maxT = 0
-        var lastT = -10
-        for t in 0..<100000 {
-            let xCoord = startX + t * xDir
-            let yCoord = startY + t * yDir
-            if xCoord >= self.heatMapDataArray[0].count || yCoord >= self.heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
-                break
-            }
-            let val = self.heatMapDataArray[yCoord][xCoord]?.value
-            // Only add values that are more than 2mm away from the previous one
-            if val != nil && (t - lastT) > 2 * self.resolution {
-                tPoints.append(Double(t))
-                zValues.append(val!)
-                lastT = t
-                //maxT = t
-//                if minT == 10000000 {
-//                    minT = t
-//                }
-            }
-        }
-        
-        spliner.setPoints(newTs: tPoints, newZs: zValues)
-        
-        if tPoints.count >= 3 {
-//            let unconstrainedSpliner = CubicSpline(xPoints: tPoints, yPoints: zValues)
-//            let spliner = ConstrainedCubicSpline(xPoints: tPoints, yPoints: zValues, maxDistance: self.dangerGap * Double(self.resolution))
-//            for t in minT..<maxT {
-//                //print("spline interp at x=", i, "y=", y, "is", spliner.interpolate(Double(i)))
-//                let constrainedValues = spliner.interpolate(Double(t))
-//                if constrainedValues != nil {
-//                    var distance = constrainedValues!.distance
-//                    if xDir != 0 && yDir != 0 {
-//                        distance *= sqrt(2)
-//                    }
-//                    let wildValue = unconstrainedSpliner.interpolate(Double(t))
-                    
-//                    if xDir == 0 {
-//                        self.constrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-//                        self.unconstrainedVertical[startY + t * yDir][startX] = InterpolatedDataPoint(value: wildValue, distance: distance)
-//                    } else if yDir == 0 {
-//                        self.constrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-//                        self.unconstrainedHorizontal[startY][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
-//                    } else if xDir * yDir > 0 {
-//                        self.constrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-//                        self.unconstrainedDownright[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
-//                    } else {
-//                        self.constrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: constrainedValues!.value, distance: distance)
-//                        self.unconstrainedDownleft[startY + t * yDir][startX + t * xDir] = InterpolatedDataPoint(value: wildValue, distance: distance)
-//                    }
-                //}
 
-            //}
-        }
-        //print("END x: \(startX), y: \(startY), xDir: \(xDir), yDir: \(yDir)")
-    }
-    
 
-    
-
-    
-
-    // Loop through data in chunks of size x size and set the bottom left pixel to that data
-    public func createSquareAverages(squareSize: Int) {
-        let horizontalIterations = (graphMaxX - graphMinX) / squareSize
-        let verticalIterations = (graphMaxY - graphMinY) / squareSize
-        for x in 0..<horizontalIterations {
-            for y in 0..<verticalIterations {
-                var localSum : Double = 0.0
-                var pointsTallied = 0
-                // Loop over square to sum values
-                for i in 0..<squareSize * resolution {
-                    for j in 0..<squareSize * resolution {
-                        let z = splinerWeightedAvg[y * squareSize * resolution + j][x * squareSize * resolution + i]?.value
-                        if z != nil {
-                            localSum += z!
-                            pointsTallied += 1
-                        }
-                    }
-                }
-                //print("pointsTallied=", pointsTallied)
-                if pointsTallied > 0 {
-                    let average = localSum / Double(pointsTallied)
-                    let newPoint = WeightedDataPoint(value: average, samplesTaken: 0)
-                    squareAverageSizeToArray[squareSize]![y][x] = newPoint
-                }
-            }
-        }
-    }
-    
-    private func fillInSquareAverages(squareSize: Int) {
-        var squareArray = squareAverageSizeToArray[squareSize]!
-        for x in 0..<squareArray[0].count {
-            for y in 0..<squareArray.count {
-                if squareArray[y][x].samplesTaken == 0 {
-                    let newPoint = WeightedDataPoint(value: self.minZ, samplesTaken: 0)
-                    squareAverageSizeToArray[squareSize]![y][x] = newPoint
-                }
-            }
-        }
-    }
     
     private func precalcCubicValues(step: Int) {
         precalcStepSquared = Array(repeating: 0.0, count: step * resolution)
@@ -776,15 +700,11 @@ public class HeatMapGenerator {
     }
     
     private func performBicubicInterpolation(squareSizeInMm: Int) {
-        let xCount = heatMapDataArray[0].count / self.resolution / self.interpSquareSize - 1
-        let yCount = heatMapDataArray.count / self.resolution / self.interpSquareSize - 1
+        let xCount = theOneSquareAverageArray[0].count
+        let yCount = theOneSquareAverageArray.count
 
-        let squareSize = self.resolution * self.interpSquareSize
-        
-        for x in 0..<xCount {
-            for y in 0..<yCount {
-                bicubInterpSquare(xStartIndex: x * squareSize + squareSize / 2, yStartIndex: y * squareSize + squareSize / 2, squareSizeMm: squareSizeInMm)
-            }
+        DispatchQueue.concurrentPerform(iterations: xCount * yCount) {i in
+            bicubInterpSquare(xStartIndex: i % xCount, yStartIndex: i / xCount, squareSizeMm: squareSizeInMm)
         }
     }
     
@@ -805,23 +725,21 @@ public class HeatMapGenerator {
 //        }
         
         let squareSizePx = squareSizeMm * self.resolution
-        let mapValues = squareAverageSizeToArray[squareSizeMm]!
+        let mapValues = theOneSquareAverageArray
         
         if mapValues[yStartIndex][xStartIndex].samplesTaken <= 0 {
             // TODO: Fill in this square with just the raw color?
             return
         }
-        let currentVal = mapValues[yStartIndex][xStartIndex].value
-        
         
         let xMaxIndex = mapValues[0].count - 1
         let yMaxIndex = mapValues.count - 1
         
         
-        var x1Index = xStartIndex - 1 * squareSizePx
+        var x1Index = xStartIndex - 1
         let x2Index = xStartIndex
-        var x3Index = xStartIndex + 1 * squareSizePx
-        var x4Index = xStartIndex + 2 * squareSizePx
+        var x3Index = xStartIndex + 1
+        var x4Index = xStartIndex + 2
         
         if x1Index < 0 {
             x1Index = x2Index
@@ -833,12 +751,10 @@ public class HeatMapGenerator {
             x4Index = x3Index
         }
         
-        
-        
-        var y1Index = yStartIndex - 1 * squareSizePx
+        var y1Index = yStartIndex - 1
         let y2Index = yStartIndex
-        var y3Index = yStartIndex + 1 * squareSizePx
-        var y4Index = yStartIndex + 2 * squareSizePx
+        var y3Index = yStartIndex + 1
+        var y4Index = yStartIndex + 2
         
         if y3Index > yMaxIndex {
             y3Index = y2Index
@@ -850,46 +766,6 @@ public class HeatMapGenerator {
         if y1Index < 0 {
             y1Index = y2Index
         }
-        
-//        // Check top row (row above me)
-//        // If missing any values, just use my start row instead for these values
-//        let topRow = [mapValues[y1Index][x1Index], mapValues[y1Index][x2Index], mapValues[y1Index][x3Index], mapValues[y1Index][x4Index]]
-//        if topRow[0] == nil || topRow[1] == nil || topRow[2] == nil || topRow[3] == nil {
-//            y1Index = y2Index
-//        }
-//
-//        // Check 3rd row (row we are going to)
-//        // If missing any values, just use our origin row
-//        let thirdRow = [mapValues[y3Index][x1Index], mapValues[y3Index][x2Index], mapValues[y3Index][x3Index], mapValues[y3Index][x4Index]]
-//        if thirdRow[0] == nil || thirdRow[1] == nil || thirdRow[2] == nil || thirdRow[3] == nil {
-//            y3Index = y2Index
-//        }
-//
-//        // Check bottom row
-//        // If missing any values, just use the row above instead
-//        let bottomRow = [mapValues[y4Index][x1Index], mapValues[y4Index][x2Index], mapValues[y4Index][x3Index], mapValues[y4Index][x4Index]]
-//        if bottomRow[0] == nil || bottomRow[1] == nil || bottomRow[2] == nil || bottomRow[3] == nil {
-//            y4Index = y3Index
-//        }
-//
-//        // Check left column
-//        let leftColumn = [mapValues[y1Index][x1Index], mapValues[y2Index][x1Index], mapValues[y3Index][x1Index], mapValues[y4Index][x1Index]]
-//        if leftColumn[0] == nil || leftColumn[1] == nil || leftColumn[2] == nil || leftColumn[3] == nil {
-//            x1Index = x2Index
-//        }
-//
-//        // Check 3rd column
-//        let thirdColumn = [mapValues[y1Index][x3Index], mapValues[y2Index][x3Index], mapValues[y3Index][x3Index], mapValues[y4Index][x3Index]]
-//        if thirdColumn[0] == nil || thirdColumn[1] == nil || thirdColumn[2] == nil || thirdColumn[3] == nil {
-//            x3Index = x2Index
-//        }
-//
-//        // Check last column
-//        let lastColumn = [mapValues[y1Index][x4Index], mapValues[y2Index][x4Index], mapValues[y3Index][x4Index], mapValues[y4Index][x4Index]]
-//        if lastColumn[0] == nil || lastColumn[1] == nil || lastColumn[2] == nil || lastColumn[3] == nil {
-//            x4Index = x3Index
-//        }
-        
         
         let p : [[Double]] = [
             [mapValues[y1Index][x1Index].value, mapValues[y2Index][x1Index].value, mapValues[y3Index][x1Index].value, mapValues[y4Index][x1Index].value],
@@ -929,7 +805,7 @@ public class HeatMapGenerator {
         
         // Loop x and y from "0 to 1" by steps based on square size
         for i in 0..<squareSizePx {
-            let xIndex = xStartIndex + i
+            let xIndex = xStartIndex * squareSizePx + squareSizePx / 2 + i
             if xIndex >= heatMapDataArray[0].count {
                 break
             }
@@ -940,8 +816,8 @@ public class HeatMapGenerator {
 
             
             for j in 0..<squareSizePx {
-                let yIndex = yStartIndex + j
-                if yIndex < 0 {
+                let yIndex = yStartIndex * squareSizePx + squareSizePx / 2 + j
+                if yIndex >= heatMapDataArray.count {
                     break
                 }
                 
@@ -960,7 +836,8 @@ public class HeatMapGenerator {
                 
                 // When storing, need to inverse the y values
                 // When y=0, mathmatically that is the bottom of our square
-                bicubInterpSizeToArray[squareSizeMm]![yIndex][xIndex] = WeightedDataPoint(value: interpValue, samplesTaken: 0)
+                //print(xIndex, yIndex)
+                theOneBicubArray[yIndex][xIndex] = WeightedDataPoint(value: interpValue, samplesTaken: 1)
                 
             }
         }
@@ -1125,6 +1002,97 @@ public class HeatMapGenerator {
             
         }
     }
+    
+    // Faster function that is more restrained
+    public func createLiveImage(magFactor: Int = 2) -> UIImage {
+        let start = Date()
+        let xCount = theOneBicubArray[0].count
+        let yCount = theOneBicubArray.count
+        let zDiff = abs(abs(self.maxZ) - abs(self.minZ))
+        
+        //print(zDiff)
+        DispatchQueue.concurrentPerform(iterations: xCount * yCount) {i in
+            fillInPixels(smallX: i % xCount, smallY: i / xCount, zDiff: zDiff, magFactor: magFactor)
+        }
+        
+//        for y in stride(from: 0, to: yCount * magFactor, by: magFactor) {
+//            //fillInPixelRow(y: y, zDiff: zDiff, magFactor: magFactor)
+//            for x in stride(from: 0, to: xCount * magFactor, by: magFactor) {
+//                fillInPixels(x: x, y: y, zDiff: zDiff, magFactor: magFactor)
+//            }
+//        }
+        let end = Date()
+        //print("live image array time:", Int(end.timeIntervalSince(start) * 1000), "ms")
+        return generateImageFromPixels(pixelData: pixelsArray, width: xCount * magFactor, height: yCount * magFactor)
+    }
+    
+    // Directly write values to pixelsArray in a small chunk
+    private func fillInPixels(smallX: Int, smallY: Int, zDiff: Double, magFactor: Int) {
+        var pixel: PixelData? = nil
+        let x = smallX * magFactor
+        let y = smallY * magFactor
+        
+        // White/Green pixels centimeter locations
+        if ((x % (10 * self.resolution * magFactor) == 0 && y % (10 * self.resolution * magFactor) == 0)) {
+            pixel = PixelData(a: 255, r: 255, g: 255, b: 255)
+        } else {
+            let mahPoint = self.theOneBicubArray[y / magFactor][x / magFactor]
+            if mahPoint.samplesTaken > 0 {
+                let z = mahPoint.value
+                var ratio = Int(round(255 * (abs(abs(z) - abs(minZ))) / zDiff))
+                if ratio < 0 {
+                    ratio = 0
+                }
+                if ratio > 255 {
+                    ratio = 255
+                }
+                //print("ratio=", ratio)
+                let daColor = mPlasmaColormap[ratio]
+                   pixel = PixelData(a: 255, r: daColor.r, g: daColor.g, b: daColor.b)
+            }
+        }
+        if pixel != nil {
+            for j in 0..<magFactor {
+                for i in 0..<magFactor {
+                    let oneDIndex = (x+i) + ((j + (self.theOneBicubArray.count-1) * magFactor)-y) * self.theOneBicubArray[0].count * magFactor
+                    self.pixelsArray[oneDIndex] = pixel!
+                }
+            }
+        }
+    }
+    
+    // Directly write values to pixelsArray in a small chunk
+//    private func fillInPixelRow(y: Int, zDiff: Double, magFactor: Int) {
+//        var pixel: PixelData? = nil
+//        for x in stride(from: 0, to: theOneBicubArray[0].count * magFactor, by: magFactor) {
+//            // White/Green pixels centimeter locations
+//            if ((x % (10 * resolution * magFactor) == 0 && y % (10 * resolution * magFactor) == 0)) {
+//                pixel = PixelData(a: 255, r: 255, g: 255, b: 255)
+//            } else if let weightedPoint = theOneBicubArray[y / magFactor][x / magFactor] {
+//                let z = weightedPoint.value
+//                var ratio = Int(round(255 * (abs(abs(z) - abs(minZ))) / zDiff))
+//                if ratio < 0 {
+//                    ratio = 0
+//                }
+//                if ratio > 255 {
+//                    ratio = 255
+//                }
+//                //print("ratio=", ratio)
+//                let daColor = mPlasmaColormap[ratio]
+//                   pixel = PixelData(a: 255, r: daColor.r, g: daColor.g, b: daColor.b)
+//            }
+//            if pixel != nil {
+//                for j in 0..<magFactor {
+//                    for i in 0..<magFactor {
+//                        let oneDIndex = (x+i) + ((j + (theOneBicubArray.count-1) * magFactor)-y) * theOneBicubArray[0].count * magFactor
+//                        pixelsArray[oneDIndex] = pixel!
+//                    }
+//                }
+//            }
+//        }
+//    }
+    
+
 
     // Run through the data and set color values based on the z value of each square compared to the min/max
     // Note: Converts data array to 1D for the sake of creating the image
@@ -1133,20 +1101,16 @@ public class HeatMapGenerator {
         let yCount = dataArray.count
         //print("xCount=", xCount, "yCount=", yCount)
         
-        var pixels: [PixelData] = Array(repeating: PixelData(a: 255, r: 0, g: 0, b: 0), count: xCount * yCount * magFactor * magFactor)
+        var pixels: [PixelData] = Array(repeating: PixelData(a: 0, r: 0, g: 0, b: 0), count: xCount * yCount * magFactor * magFactor)
         
-//        if self.zFloor != nil && self.minZ < self.zFloor! {
-//            self.minZ = self.zFloor!
-//        }
-//        if self.zCeil != nil && self.maxZ > self.zCeil! {
-//            self.maxZ = self.zCeil!
-//        }
         let zDiff = abs(abs(self.maxZ) - abs(self.minZ))
         
         //print(zDiff)
+        let start = Date()
         
         for y in stride(from: 0, to: yCount * magFactor, by: magFactor) {
                 for x in stride(from: 0, to: xCount * magFactor, by: magFactor) {
+                    
                     var pixel: PixelData? = nil
                     
                     // White/Green pixels centimeter locations
@@ -1168,7 +1132,7 @@ public class HeatMapGenerator {
                         }
                         //print("ratio=", ratio)
                         let daColor = mPlasmaColormap[ratio]
-                           pixel = PixelData(a: 255, r: daColor.r, g: daColor.g, b: daColor.b)
+                           pixel = PixelData(a: 180, r: daColor.r, g: daColor.g, b: daColor.b)
                     }
                     if pixel != nil {
                         for j in 0..<magFactor {
@@ -1181,9 +1145,12 @@ public class HeatMapGenerator {
                 }
 
         }
-        
+        let end = Date()
+        //print("old image array time:", Int(end.timeIntervalSince(start) * 1000), "ms")
         return generateImageFromPixels(pixelData: pixels, width: xCount * magFactor, height: yCount * magFactor)
     }
+    
+    
     
 
     
@@ -1351,6 +1318,78 @@ public class HeatMapGenerator {
 //            }
 //        }
     }
+    
+    //    IMAGE GENERATION ONLY
+    //    public func performUnconstrainedSplineWeightedAverage() {
+    //        for x in 0..<heatMapDataArray[0].count {
+    //            for y in 0..<heatMapDataArray.count {
+    //                let verticalVal = unconstrainedVertical[y][x]
+    //                let horizontalVal = unconstrainedHorizontal[y][x]
+    //                let diag1Val = unconstrainedDownright[y][x]
+    //                let diag2Val = unconstrainedDownleft[y][x]
+    //
+    //                // Linear, Square, Cubic
+    //                var numerators: [Double] = [0.0, 0.0, 0.0]
+    //                var denominators: [Double] = [0.0, 0.0, 0.0]
+    //                var haveAVal = false
+    //
+    //                if verticalVal != nil {
+    //                    haveAVal = true
+    //                    let myVal = verticalVal!
+    //                    numerators[0] += myVal.value / myVal.distance
+    //                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+    //                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+    //
+    //                    denominators[0] += 1.0 / myVal.distance
+    //                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+    //                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+    //                }
+    //                if horizontalVal != nil {
+    //                    haveAVal = true
+    //                    let myVal = horizontalVal!
+    //                    numerators[0] += myVal.value / myVal.distance
+    //                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+    //                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+    //
+    //                    denominators[0] += 1.0 / myVal.distance
+    //                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+    //                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+    //                }
+    //                if diag1Val != nil {
+    //                    haveAVal = true
+    //                    let myVal = diag1Val!
+    //                    numerators[0] += myVal.value / myVal.distance
+    //                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+    //                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+    //
+    //                    denominators[0] += 1.0 / myVal.distance
+    //                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+    //                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+    //                }
+    //                if diag2Val != nil {
+    //                    haveAVal = true
+    //                    let myVal = diag2Val!
+    //                    numerators[0] += myVal.value / myVal.distance
+    //                    numerators[1] += myVal.value / pow(myVal.distance, 2)
+    //                    numerators[2] += myVal.value / pow(myVal.distance, 3)
+    //
+    //                    denominators[0] += 1.0 / myVal.distance
+    //                    denominators[1] += 1.0 / pow(myVal.distance, 2)
+    //                    denominators[2] += 1.0 / pow(myVal.distance, 3)
+    //                }
+    //
+    //                if haveAVal {
+    //                    let linWeightedVal = numerators[0] / denominators[0]
+    //                    let squareWeightedVal = numerators[1] / denominators[1]
+    //                    let cubeWeightedVal = numerators[2] / denominators[2]
+    //
+    //                    firstOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: linWeightedVal, distance: 0.0)
+    //                    secondOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: squareWeightedVal, distance: 0.0)
+    //                    thirdOrderWeightedUnconstrained[y][x] = InterpolatedDataPoint(value: cubeWeightedVal, distance: 0.0)
+    //                }
+    //            }
+    //        }
+    //    }
     
     // IMAGE GENERATION ONLY
     public func linearInterpolateLine(xStart: Int, yStart: Int, xDir: Int, yDir: Int) {

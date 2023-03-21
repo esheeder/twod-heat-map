@@ -1,5 +1,5 @@
 //
-//  CubicSpline.swift
+//  HeatMapSpline.swift
 //  twod-heat-map
 //
 //
@@ -7,8 +7,8 @@
 import Foundation
 
 open class HeatMapSpline {
-    fileprivate var t: [Double] = []
-    fileprivate var z: [Double] = []
+    var t: [Double] = []
+    var z: [Double] = []
     
     fileprivate var b: [Double] = []
     fileprivate var c: [Double] = []
@@ -17,8 +17,9 @@ open class HeatMapSpline {
     // Array of the computed values for every index
     var zCalcs: [InterpolatedDataPoint?]
     fileprivate var minIndexGap: Double
+    var shouldUpdate: Bool = false
     
-    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 0.0) {
+    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 0.0, maxInterpGap: Double = 20) {
 
         self.zCalcs = [InterpolatedDataPoint?](repeating: nil, count: indexCount)
         self.minIndexGap = minIndexGap
@@ -231,7 +232,10 @@ open class HeatMapSpline {
             }
             i -= 1
         }
-
+        
+//        if t[i+1]-t[i] > maxInterpGap {
+//            return nil
+//        }
         let deltaX: Double = index - t[i]
         let af: Double = b[i]
         let cf: Double = c[i]

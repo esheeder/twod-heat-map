@@ -28,10 +28,6 @@
                                 <rect key="frame" x="1006" y="751.5" width="70" height="59"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="fBe-av-5d9">
-                                <rect key="frame" x="5" y="122" width="550" height="550"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="blu-t6-K4Z" userLabel="xminTextField">
                                 <rect key="frame" x="37" y="31" width="97" height="34"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -191,7 +187,11 @@
                                 </connections>
                             </textField>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="WtR-ob-xSu" userLabel="Da Image2">
-                                <rect key="frame" x="620" y="122.5" width="550" height="550"/>
+                                <rect key="frame" x="142" y="110.5" width="712" height="679"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="fBe-av-5d9">
+                                <rect key="frame" x="142" y="110.5" width="712" height="680"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                         </subviews>

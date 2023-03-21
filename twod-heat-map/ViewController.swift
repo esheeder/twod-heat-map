@@ -52,7 +52,7 @@ let interpResolution: Int = 2
 
 // Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
 // For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
-let magnifyingFactor: Int = 2
+let magnifyingFactor: Int = 1
 
 // If pixels are more than this distance away (in millimeters), don't do linear interpolation between them.
 // Mostly just for images. Can set to something like 100 to make it not do anything but probably don't need to change it
@@ -88,6 +88,8 @@ let wavelengthParams = [
 //    "940phase": ["min": 3.7, "max": 4.2, "csvIndex": 8+48],
 //    "980phase": ["min": 4.8, "max": 5.2, "csvIndex": 8+60],
 ]
+
+var showRawPoints = true
 
 class ViewController: UIViewController {
     
@@ -150,16 +152,51 @@ class ViewController: UIViewController {
     }
     
     @IBAction func toggleToggled(_ sender: Any) {
-        
+        print("toggle toggled")
+        showRawPoints = !showRawPoints
     }
     
+    var clickCount = 0
+    let dataPoints: [SensorData] = []
+    var graphBounds = [
+        "xMin": 0,
+        "xMax": 0,
+        "yMin": 0,
+        "yMax": 0,
+    ]
+    var daGenerators: [String: HeatMapGenerator] = [:]
+    var csvData: [SensorData] = []
 
     @IBAction func buttonPressed(_ sender: Any) {
-//        genIndex += 1
-//        if genIndex > theGenerators.count - 1 {
-//            genIndex = 0
-//        }
-//        daImage2.image = theGenerators[genIndex].createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray)
+        //print("clicky")
+
+        let dataPointsPerChunk = 130
+        let daGen = daGenerators["690amp"]!
+        
+        for j in 0...dataPointsPerChunk {
+            let index = clickCount * dataPointsPerChunk + j
+            if index >= csvData.count {
+                break
+            }
+            daGen.processNewDataPoint(dataPoint: csvData[index])
+        }
+        let start1 = Date()
+        daGen.processData()
+        let end1 = Date()
+        //print("process time:", Int(end1.timeIntervalSince(start1) * 1000), "ms")
+        let start2 = Date()
+        setLiveImage(generator: daGenerators["690amp"]!)
+        let end2 = Date()
+        //print("image time:", Int(end2.timeIntervalSince(start2) * 1000), "ms")
+        clickCount += 1
+        //print(clickCount * dataPointsPerChunk)
+        if clickCount * dataPointsPerChunk < 100000 {
+            DispatchQueue.main.asyncAfter(deadline: .now()) {
+                self.buttonPressed(sender)
+            }
+
+        }
+
     }
     
     func setImages(arr1: [[DataPoint?]], arr2: [[DataPoint?]]) {
@@ -169,13 +206,88 @@ class ViewController: UIViewController {
 //        daImage4.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray, showSquares: true)
     }
     
+    func setLiveImage(generator: HeatMapGenerator) {
+        //print("drawing image")
+        if showRawPoints {
+            self.daImage.isHidden = false
+            self.daImage.image = generator.createHeatMapImageFromDataArray(dataArray: generator.heatMapDataArray)
+        } else {
+            self.daImage.isHidden = true
+        }
+        
+        self.daImage.setNeedsDisplay()
+        self.daImage2.image = generator.createLiveImage()
+        self.daImage2.setNeedsDisplay()
+//        DispatchQueue.main.async {
+//            print("setting image?")
+//
+//        }
+        
+    }
     
-
-
+//    let csvData = getCsvData(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, zIndex: 3)
+//    print(csvData.count)
+//    let dataPointsPerChunk = 5000
+//    let daGen = daGenerators["690amp"]!
+//    for i in 0..<95000 / dataPointsPerChunk {
+//        for j in 0...dataPointsPerChunk {
+//            daGen.processNewDataPoint(dataPoint: csvData[i * dataPointsPerChunk + j])
+//        }
+//        daGen.processData()
+//        sleep(1)
+//        setLiveImage(generator: daGenerators["690amp"]!)
+//    }
     
+    
+//
+//    override func viewDidAppear(_ animated: Bool) {
+//        super.viewDidAppear(animated)
+//
+//
+//
+//    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let bounds = getXAndYBoundsFromCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex)
+        
+        if bounds == nil {
+            print("Couldn't figure out bounds :(")
+            return
+        }
+        
+        // Set the bounds to round up/down to nearest centimeter and multiply by 10 to convert to mm
+        graphBounds = [
+            "xMin": 10 * Int(round(bounds!.xMin - 1)),
+            "xMax": 10 * Int(round(bounds!.xMax + 1)),
+            "yMin": 10 * Int(round(bounds!.yMin - 1)),
+            "yMax": 10 * Int(round(bounds!.yMax + 1)),
+        ]
+        
+        // Create a HeatMapGenerator for each wavelength we want
+        for key in Array(wavelengthParams.keys) {
+            let params = wavelengthParams[key]!
+            let myGenerator = HeatMapGenerator(
+//                minX: -10,
+//                maxX: 90,
+//                minY: -70,
+//                maxY: 10,
+                minX: graphBounds["xMin"]!,
+                maxX: graphBounds["xMax"]!,
+                minY: graphBounds["yMin"]!,
+                maxY: graphBounds["yMax"]!,
+                resolution: interpResolution,
+                interpSquareSizes: squareSizes,
+                dangerGap: maxInterpGap,
+                zCsvIndex: params["csvIndex"]! as! Int,
+                zFloor: params["min"] as? Double,
+                zCeil: params["max"] as? Double
+            )
+            daGenerators[key] = myGenerator
+            let daGen = daGenerators[key]!
+        }
+        csvData = getCsvData(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, zIndex: 3)
+        print("csv read:", csvData.count)
 //        let allT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33, 34]
 //        let allZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34, 35]
 //
@@ -273,23 +385,23 @@ class ViewController: UIViewController {
         //processTicTacToe(gaussians: daGaussians)
         
         // Read the CSV to get our min and max x and y values
-        let bounds = getXAndYBoundsFromCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex)
-        
-        if bounds == nil {
-            print("Couldn't figure out bounds :(")
-            return
-        }
-        
-        // Set the bounds to round up/down to nearest centimeter and multiply by 10 to convert to mm
-        let graphBounds = [
-            "xMin": 10 * Int(round(bounds!.xMin - 1)),
-            "xMax": 10 * Int(round(bounds!.xMax + 1)),
-            "yMin": 10 * Int(round(bounds!.yMin - 1)),
-            "yMax": 10 * Int(round(bounds!.yMax + 1)),
-        ]
+//        let bounds = getXAndYBoundsFromCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex)
+//
+//        if bounds == nil {
+//            print("Couldn't figure out bounds :(")
+//            return
+//        }
+//
+//        // Set the bounds to round up/down to nearest centimeter and multiply by 10 to convert to mm
+//        let graphBounds = [
+//            "xMin": 10 * Int(round(bounds!.xMin - 1)),
+//            "xMax": 10 * Int(round(bounds!.xMax + 1)),
+//            "yMin": 10 * Int(round(bounds!.yMin - 1)),
+//            "yMax": 10 * Int(round(bounds!.yMax + 1)),
+//        ]
 
         
-        var daGenerators: [String: HeatMapGenerator] = [:]
+        //var daGenerators: [String: HeatMapGenerator] = [:]
 //        var trueGenerator = HeatMapGenerator(
 //            minX: -10,
 //            maxX: 90,
@@ -323,11 +435,13 @@ class ViewController: UIViewController {
                 zCeil: params["max"] as? Double
             )
             daGenerators[key] = myGenerator
-            let daGen = daGenerators[key]!
         }
         
         // Process CSV file and store the proper z values in each HeatMapGenerator
-        processCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, daGenerators: daGenerators, gaussians: nil)
+        
+
+        //processCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, daGenerators: daGenerators, gaussians: nil)
+        
         //processTicTacToe(generator: daGenerators["gauss"]!, gaussians: daGausses)
         
         //processTrueGauss(generator: trueGenerator, gaussians: daGausses)
@@ -337,14 +451,14 @@ class ViewController: UIViewController {
         for key in Array(daGenerators.keys) {
             let daGen = daGenerators[key]!
             //print(key)
-            daGen.processData(doInterp: doInterp)
+            //daGen.processData(doInterp: doInterp)
             
 
             //saveInterpsSummary(folder: "/Users/eric/Documents/nearwave/twod-heat-map/Images/breast-high-res/\(filename)/summary/", daGens: daGenerators)
             //daGen.clearArrays()
             
             //print("")
-            saveImages(folder: folderName + fileName + "/", key: key, daGen: daGen)
+            //saveImages(folder: folderName + fileName + "/", key: key, daGen: daGen)
 //            print("raw data")
 //            daGen.printRawData()
 //            print("")
@@ -434,6 +548,32 @@ class ViewController: UIViewController {
         }
     }
     
+    func getCsvData(filename: String, xIndex: Int, yIndex: Int, zIndex: Int) -> [SensorData] {
+        var data: [SensorData] = []
+        // Read the csv file and save each row of data as a triplet
+        guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
+            return []
+        }
+        var csvAsString = ""
+        do {
+            csvAsString = try String(contentsOfFile: filepath)
+        } catch {
+            print(error)
+            return []
+        }
+        let csvData = csvAsString.components(separatedBy: "\n")
+        for i in pointsToSkip+1..<csvData.count-1 {
+            let rowData = csvData[i].components(separatedBy: ",")
+            // Multiply by 10 to convert cm to mm
+            let xCoord = 10.0 * Double(rowData[xIndex])!
+            let yCoord = 10.0 * Double(rowData[yIndex])!
+            let z = abs(Double(rowData[zIndex])!)
+            let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: z)
+            data.append(sensorDataPoint)
+        }
+        return data
+    }
+    
     func processTicTacToe(generator: HeatMapGenerator, gaussians: [Gaussian]) {
         let step: Double = 1.0 / Double(generator.resolution)
         // Vertical lines
@@ -512,6 +652,10 @@ class ViewController: UIViewController {
             //"2c1_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.cubicWeightSplineInterpolatedDataArray),
             "2c2_cubeWeightedSplineAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.splinerWeightedAvg, showSquares: true, magFactor: magnifyingFactor),
             
+            "3_squareAverage": daGen.createHeatMapImageFromDataArray(dataArray: daGen.theOneSquareAverageArray, showSquares: false, magFactor: magnifyingFactor * interpResolution * daGen.interpSquareSize),
+            "4_bicubAverage": daGen.createHeatMapImageFromDataArray(dataArray: daGen.theOneBicubArray, showSquares: false, magFactor: magnifyingFactor),
+            "5_liveImage": daGen.createLiveImage()
+            
             //
             //"9a1_horizontalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalLinear, magFactor: magnifyingFactor),
             //"9a2_verticalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.verticalLinear, magFactor: magnifyingFactor),
@@ -531,14 +675,14 @@ class ViewController: UIViewController {
             let squareFileName = "3" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmSquareAverage"
             //print(squareFileName)
             let squareArray = daGen.squareAverageSizeToArray[size]!
-            let squareImage = daGen.createHeatMapImageFromDataArray(dataArray: squareArray, showSquares: true, magFactor: magnifyingFactor * interpResolution * size)
-            images[squareFileName] = squareImage
+            //let squareImage = daGen.createHeatMapImageFromDataArray(dataArray: squareArray, showSquares: false, magFactor: magnifyingFactor * interpResolution * size)
+            //images[squareFileName] = squareImage
 
             // Bicub
             let bicubFileName = "4" + String(Character(UnicodeScalar(i + 97)!)) + "_" + String(size) + "mmBicubicInterpolation"
             let bicubArray = daGen.bicubInterpSizeToArray[size]!
-            let bicubImage = daGen.createHeatMapImageFromDataArray(dataArray: bicubArray, showSquares: true, magFactor: magnifyingFactor)
-            images[bicubFileName] = bicubImage
+            //let bicubImage = daGen.createHeatMapImageFromDataArray(dataArray: bicubArray, showSquares: true, magFactor: magnifyingFactor)
+            //images[bicubFileName] = bicubImage
         }
         
         // Save files in local folder
