@@ -48,6 +48,9 @@ public class HeatMapGenerator {
     var highPointsDiscarded = 0
     var zCsvIndex: Int
     
+    var lastXIndex: Int = 0
+    var lastYIndex: Int = 0
+    
     // The data points from above plotted on x, y coordinates. For any collisions, we add them to a running average at the point
     var heatMapDataArray: [[WeightedDataPoint?]] = [[]]
     
@@ -225,9 +228,9 @@ public class HeatMapGenerator {
         }
         
         // Mag factor of 2
-        pixelsArray = [PixelData](repeating: PixelData(a: 0, r: 0, g: 0, b: 0), count: pixelWidth * pixelHeight * 2 * 2)
+        pixelsArray = [PixelData](repeating: PixelData(a: 255, r: 0, g: 0, b: 0), count: pixelWidth * pixelHeight * 2 * 2)
         for i in 0..<pixelsArray.count {
-            pixelsArray[i] = PixelData(a: 0, r: 0, g: 0, b: 0)
+            pixelsArray[i] = PixelData(a: 255, r: 0, g: 0, b: 0)
         }
 
         for squareSize in squareAverageSizes {
@@ -417,7 +420,7 @@ public class HeatMapGenerator {
             numerator += verticalInfo.value / cubed
             denominator += 1.0 / cubed
         }
-        if let horizontalInfo = horizontalSpliners[Int(y)].zCalcs[x] {
+        if let horizontalInfo = horizontalSpliners[y].zCalcs[x] {
             valuesUsed += 1
             let cubed = pow(horizontalInfo.distance, 3)
             numerator += horizontalInfo.value / cubed
@@ -585,6 +588,9 @@ public class HeatMapGenerator {
 //            print("heatMapDataArray.count=", heatMapDataArray.count)
             return
         }
+        
+        self.lastXIndex = xIndex
+        self.lastYIndex = yIndex
         
         
         //print(dataPoint.z)
@@ -1015,6 +1021,8 @@ public class HeatMapGenerator {
             fillInPixels(smallX: i % xCount, smallY: i / xCount, zDiff: zDiff, magFactor: magFactor)
         }
         
+        fillInPointerPixels(magFactor: magFactor)
+        
 //        for y in stride(from: 0, to: yCount * magFactor, by: magFactor) {
 //            //fillInPixelRow(y: y, zDiff: zDiff, magFactor: magFactor)
 //            for x in stride(from: 0, to: xCount * magFactor, by: magFactor) {
@@ -1061,6 +1069,69 @@ public class HeatMapGenerator {
         }
     }
     
+    private func fillInPointerPixels(magFactor: Int) {
+        
+        var pixel = PixelData(a: 255, r: 0, g: 0, b: 0)
+        let x = lastXIndex * magFactor
+        let y = lastYIndex * magFactor
+        
+        for j in 0..<magFactor {
+            for i in 0..<magFactor {
+                let oneDIndex = (x+i) + ((j + (self.theOneBicubArray.count-1) * magFactor)-y) * self.theOneBicubArray[0].count * magFactor
+                self.pixelsArray[oneDIndex] = pixel
+            }
+        }
+    }
+    
+    public func createLinearArrays() {
+        unconstrainedHorizontal = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        unconstrainedVertical = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        unconstrainedDownleft = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        unconstrainedDownright = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
+        
+        let imageWidth = heatMapDataArray[0].count
+        let imageHeight = heatMapDataArray.count
+        
+        for x in 0..<imageWidth {
+            for y in 0..<imageHeight {
+                
+                // Vertical spliners
+                if let verticalInfo = verticalSpliners[x].zCalcs[y] {
+                    unconstrainedVertical[y][x] = verticalInfo
+                }
+                
+                // Horizontal spliners
+                if let horizontalInfo = horizontalSpliners[y].zCalcs[x] {
+                    unconstrainedHorizontal[y][x] = horizontalInfo
+                }
+                
+                // Upleft spliners
+                if x + y <= imageWidth {
+                    if let diag1Val = upleftSpliners[x + y].zCalcs[y] {
+                        unconstrainedDownright[y][x] = diag1Val
+                    }
+                } else {
+                    // Upleft spliners that start on the right
+                    if let diag1Val = upleftSpliners[x + y + 1].zCalcs[imageWidth - x - 1] {
+                        unconstrainedDownright[y][x] = diag1Val
+                    }
+                }
+                
+                // Upright spliners
+                if y >= x {
+                    if let diag2Val = uprightSpliners[Int(imageHeight - 1 + x - y)].zCalcs[x] {
+                        unconstrainedDownleft[y][x] = diag2Val
+                    }
+                } else {
+                    // Upright spliners that start on the bottom
+                    if let diag2Val = uprightSpliners[Int(imageHeight + x - y)].zCalcs[y] {
+                        unconstrainedDownleft[y][x] = diag2Val
+                    }
+                }
+            }
+        }
+    }
+    
     // Directly write values to pixelsArray in a small chunk
 //    private func fillInPixelRow(y: Int, zDiff: Double, magFactor: Int) {
 //        var pixel: PixelData? = nil
@@ -1096,12 +1167,12 @@ public class HeatMapGenerator {
 
     // Run through the data and set color values based on the z value of each square compared to the min/max
     // Note: Converts data array to 1D for the sake of creating the image
-    public func createHeatMapImageFromDataArray(dataArray : [[DataPoint?]], showSquares: Bool = true, magFactor: Int = 1) -> UIImage {
+    public func createHeatMapImageFromDataArray(dataArray : [[DataPoint?]], showSquares: Bool = true, magFactor: Int = 1, alphaFactor: UInt8 = 255) -> UIImage {
         let xCount = dataArray[0].count
         let yCount = dataArray.count
         //print("xCount=", xCount, "yCount=", yCount)
         
-        var pixels: [PixelData] = Array(repeating: PixelData(a: 0, r: 0, g: 0, b: 0), count: xCount * yCount * magFactor * magFactor)
+        var pixels: [PixelData] = Array(repeating: PixelData(a: alphaFactor, r: 0, g: 0, b: 0), count: xCount * yCount * magFactor * magFactor)
         
         let zDiff = abs(abs(self.maxZ) - abs(self.minZ))
         
@@ -1116,23 +1187,26 @@ public class HeatMapGenerator {
                     // White/Green pixels centimeter locations
                     if showSquares && ((x % (10 * resolution * magFactor) == 0 && y % (10 * resolution * magFactor) == 0)) {
                         if x % (20 * resolution * magFactor) == 0 {
-                            pixel = PixelData(a: 255, r: 255, g: 0, b: 0)
+                            pixel = PixelData(a: alphaFactor, r: 255, g: 0, b: 0)
                         } else {
-                            pixel = PixelData(a: 255, r: 255, g: 255, b: 255)
+                            pixel = PixelData(a: alphaFactor, r: 255, g: 255, b: 255)
                         }
                         
                     } else if let weightedPoint = dataArray[y / magFactor][x / magFactor] {
                         let z = weightedPoint.value
-                        var ratio = Int(round(255 * (abs(abs(z) - abs(minZ))) / zDiff))
-                        if ratio < 0 {
-                            ratio = 0
+                        if z != 0 {
+                            var ratio = Int(round(255 * (abs(abs(z) - abs(minZ))) / zDiff))
+                            if ratio < 0 {
+                                ratio = 0
+                            }
+                            if ratio > 255 {
+                                ratio = 255
+                            }
+                            //print("ratio=", ratio)
+                            let daColor = mPlasmaColormap[ratio]
+                               pixel = PixelData(a: alphaFactor, r: daColor.r, g: daColor.g, b: daColor.b)
                         }
-                        if ratio > 255 {
-                            ratio = 255
-                        }
-                        //print("ratio=", ratio)
-                        let daColor = mPlasmaColormap[ratio]
-                           pixel = PixelData(a: 180, r: daColor.r, g: daColor.g, b: daColor.b)
+
                     }
                     if pixel != nil {
                         for j in 0..<magFactor {

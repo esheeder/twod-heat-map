@@ -52,7 +52,7 @@ let interpResolution: Int = 2
 
 // Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
 // For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
-let magnifyingFactor: Int = 1
+let magnifyingFactor: Int = 2
 
 // If pixels are more than this distance away (in millimeters), don't do linear interpolation between them.
 // Mostly just for images. Can set to something like 100 to make it not do anything but probably don't need to change it
@@ -89,7 +89,7 @@ let wavelengthParams = [
 //    "980phase": ["min": 4.8, "max": 5.2, "csvIndex": 8+60],
 ]
 
-var showRawPoints = true
+
 
 class ViewController: UIViewController {
     
@@ -151,11 +151,14 @@ class ViewController: UIViewController {
         //setImages()
     }
     
+    
+    
     @IBAction func toggleToggled(_ sender: Any) {
         print("toggle toggled")
         showRawPoints = !showRawPoints
+        setLiveImage(generator: daGenerators["690amp"]!)
     }
-    
+    var showRawPoints = true
     var clickCount = 0
     let dataPoints: [SensorData] = []
     var graphBounds = [
@@ -166,11 +169,19 @@ class ViewController: UIViewController {
     ]
     var daGenerators: [String: HeatMapGenerator] = [:]
     var csvData: [SensorData] = []
-
-    @IBAction func buttonPressed(_ sender: Any) {
+    let dataPointsPerChunk = 500
+    
+    
+    @IBAction func saveLinearImages(_ sender: Any) {
+        let daGen = daGenerators["690amp"]!
+        daGen.createLinearArrays()
+        saveImages(folder: folderName + fileName + "/", key: String(dataPointsPerChunk * clickCount), daGen: daGen)
+    }
+    
+    @IBAction func processSomePoints(_ sender: Any) {
         //print("clicky")
 
-        let dataPointsPerChunk = 130
+        
         let daGen = daGenerators["690amp"]!
         
         for j in 0...dataPointsPerChunk {
@@ -180,21 +191,22 @@ class ViewController: UIViewController {
             }
             daGen.processNewDataPoint(dataPoint: csvData[index])
         }
-        let start1 = Date()
+        //let start1 = Date()
         daGen.processData()
-        let end1 = Date()
+        //let end1 = Date()
         //print("process time:", Int(end1.timeIntervalSince(start1) * 1000), "ms")
-        let start2 = Date()
+        //let start2 = Date()
         setLiveImage(generator: daGenerators["690amp"]!)
-        let end2 = Date()
+        //let end2 = Date()
         //print("image time:", Int(end2.timeIntervalSince(start2) * 1000), "ms")
         clickCount += 1
         //print(clickCount * dataPointsPerChunk)
+        
+        // Uncomment to have it run in "live" time
         if clickCount * dataPointsPerChunk < 100000 {
             DispatchQueue.main.asyncAfter(deadline: .now()) {
-                self.buttonPressed(sender)
+                self.processSomePoints(sender)
             }
-
         }
 
     }
@@ -209,43 +221,18 @@ class ViewController: UIViewController {
     func setLiveImage(generator: HeatMapGenerator) {
         //print("drawing image")
         if showRawPoints {
-            self.daImage.isHidden = false
-            self.daImage.image = generator.createHeatMapImageFromDataArray(dataArray: generator.heatMapDataArray)
+            self.daImage2.isHidden = false
+            self.daImage2.image = generator.createHeatMapImageFromDataArray(dataArray: generator.heatMapDataArray)
         } else {
-            self.daImage.isHidden = true
+            self.daImage2.isHidden = true
         }
         
-        self.daImage.setNeedsDisplay()
-        self.daImage2.image = generator.createLiveImage()
         self.daImage2.setNeedsDisplay()
-//        DispatchQueue.main.async {
-//            print("setting image?")
-//
-//        }
+        self.daImage.image = generator.createLiveImage()
+        self.daImage.setNeedsDisplay()
         
     }
     
-//    let csvData = getCsvData(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, zIndex: 3)
-//    print(csvData.count)
-//    let dataPointsPerChunk = 5000
-//    let daGen = daGenerators["690amp"]!
-//    for i in 0..<95000 / dataPointsPerChunk {
-//        for j in 0...dataPointsPerChunk {
-//            daGen.processNewDataPoint(dataPoint: csvData[i * dataPointsPerChunk + j])
-//        }
-//        daGen.processData()
-//        sleep(1)
-//        setLiveImage(generator: daGenerators["690amp"]!)
-//    }
-    
-    
-//
-//    override func viewDidAppear(_ animated: Bool) {
-//        super.viewDidAppear(animated)
-//
-//
-//
-//    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -633,14 +620,17 @@ class ViewController: UIViewController {
             "0a_rawData": rawDataImage,
             
             // Unconstrained + constrained splines
-            //"1a1_unconstrainedHorizontal": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedHorizontal, showSquares: true, magFactor: magnifyingFactor),
-            //"1a2_constrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedHorizontal, magFactor: magnifyingFactor),
-            //"1b1_unconstrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedVertical, showSquares: true, magFactor: magnifyingFactor),
+            "1a1_unconstrainedHorizontal": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedHorizontal, showSquares: true, magFactor: magnifyingFactor),
+            "1a2_unconstrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedVertical, showSquares: true, magFactor: magnifyingFactor),
+            "1a3_unconstrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownright, showSquares: true, magFactor: magnifyingFactor),
+            "1a4_unconstrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownleft, showSquares: true, magFactor: magnifyingFactor),
+            //"1b1_constrainedHorizontalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedHorizontal, magFactor: magnifyingFactor),
             //"1b2_constrainedVerticalSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedVertical, magFactor: magnifyingFactor),
-            //"1c1_unconstrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownright, showSquares: true, magFactor: magnifyingFactor),
-            //"1c2_constrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownright, magFactor: magnifyingFactor),
-            //"1d1_unconstrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.unconstrainedDownleft, showSquares: true, magFactor: magnifyingFactor),
-            //"1d2_constrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownleft, magFactor: magnifyingFactor),
+            //"1b3_constrainedDownrightSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownright, magFactor: magnifyingFactor),
+            //"1b4_constrainedDownleftSpline": daGen.createHeatMapImageFromDataArray(dataArray: daGen.constrainedDownleft, magFactor: magnifyingFactor),
+
+
+
             
             // Weighted averages of linear, constrained, unconstrained
             //"2a1_linearWeightedLinearAvg": daGen.createHeatMapImageFromDataArray(dataArray: daGen.linearWeightLinearInterpolatedDataArray),

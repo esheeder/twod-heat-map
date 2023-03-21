@@ -146,7 +146,7 @@ open class HeatMapSpline {
     }
     
     public func computeCoefficientVals(startI: Int, endI: Int) {
-        if self.t.count < 3 {
+        if self.t.count < 2 {
             return
         }
 
@@ -220,7 +220,7 @@ open class HeatMapSpline {
 
     public func interpolate(_ index: Double) -> InterpolatedDataPoint? {
         
-        if t.count < 3 || index < t.first! || index >= t.last! {
+        if t.count < 2 || index < t.first! || index >= t.last! {
             return nil
         }
 
