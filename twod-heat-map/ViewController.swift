@@ -47,7 +47,7 @@ let summarySizes = [3]
 // Pixels per millimeter. Higher value = smaller interpolation steps = smoother image but longer processing time
 // Don't make this too high or you might start getting gaps in the data plotting which makes interpolation worse
 // Generally keep it around 2-4 for normal runs, 6-8 for super nice pictures (will take a while at 8)
-let interpResolution: Int = 2
+let interpResolution: Int = 4
 
 // Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
 // For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
@@ -120,11 +120,11 @@ class ViewController: UIViewController {
     
     @IBAction func toggleToggled(_ sender: Any) {
         print("toggle toggled")
-        showRawPoints = !showRawPoints
+        showPlottedPoints = !showPlottedPoints
         setLiveImage(generator: liveGenerator)
     }
     
-    var showRawPoints = false
+    var showPlottedPoints = true
     var clickCount = 0
     let dataPoints: [SensorData] = []
     var graphBounds = [
@@ -135,7 +135,8 @@ class ViewController: UIViewController {
     ]
     var daGenerators: [String: HeatMapGenerator] = [:]
     var csvData: [MultiSensorData] = []
-    let dataPointsPerChunk = 2000
+    let dataPointsPerChunk = 20000
+    let dataPointsPerSecond = 1400
     var liveGenerator = LiveHeatMapGenerator()
     
     
@@ -165,6 +166,7 @@ class ViewController: UIViewController {
        
         let maxIndex = clickCount * (dataPointsPerChunk + 1)
         if maxIndex < csvData.count {
+            let dispatchStart = DispatchTime.now()
             let processPointStart = Date()
             for j in 0..<dataPointsPerChunk {
                 let index = clickCount * dataPointsPerChunk + j
@@ -181,9 +183,9 @@ class ViewController: UIViewController {
             let imageStart = Date()
             setLiveImage(generator: liveGenerator)
             let imageEnd = Date()
-            print("image time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
+            //print("image time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
             
-            print("TOTAL TIME:", Int(imageEnd.timeIntervalSince(processPointEnd) * 1000), "ms")
+            print("TOTAL TIME:", Int(imageEnd.timeIntervalSince(processPointStart) * 1000), "ms")
             
             clickCount += 1
             if clickCount % 4 == 0 {
@@ -191,7 +193,7 @@ class ViewController: UIViewController {
             }
             
             // Uncomment to have it run in "live" time
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+//            DispatchQueue.main.asyncAfter(deadline: dispatchStart + 0.1) {
 //                self.processSomePoints(sender)
 //            }
         }
@@ -207,7 +209,7 @@ class ViewController: UIViewController {
     }
     
     func setLiveImage(generator: LiveHeatMapGenerator) {
-        if showRawPoints {
+        if showPlottedPoints {
             self.frontImage.isHidden = false
             self.frontImage.image = generator.createPointsPlottedOverlay()
         } else {
@@ -220,6 +222,7 @@ class ViewController: UIViewController {
     }
     
     override func viewDidLoad() {
+        
         super.viewDidLoad()
         liveGenerator = LiveHeatMapGenerator(
             minX: -10,
