@@ -47,7 +47,7 @@ let summarySizes = [3]
 // Pixels per millimeter. Higher value = smaller interpolation steps = smoother image but longer processing time
 // Don't make this too high or you might start getting gaps in the data plotting which makes interpolation worse
 // Generally keep it around 2-4 for normal runs, 6-8 for super nice pictures (will take a while at 8)
-let interpResolution: Int = 4
+let interpResolution: Int = 2
 
 // Blow up image by integer factor - 1 pixel becomes NxN pixels in the final image
 // For the high res pics I made for Roy, interpResolution was at 4-6 and this was at 4-6
@@ -101,8 +101,9 @@ let csvIndices = [
 
 class ViewController: UIViewController {
     
-    @IBOutlet weak var frontImage: UIImageView!
+    @IBOutlet weak var middleImage: UIImageView!
     @IBOutlet weak var backImage: UIImageView!
+    @IBOutlet weak var topImage: UIImageView!
     
     @IBOutlet weak var daImage3: UIImageView!
     @IBOutlet weak var daImage4: UIImageView!
@@ -135,8 +136,9 @@ class ViewController: UIViewController {
     ]
     var daGenerators: [String: HeatMapGenerator] = [:]
     var csvData: [MultiSensorData] = []
-    let dataPointsPerChunk = 20000
+    let dataPointsPerChunk = 300
     let dataPointsPerSecond = 1400
+    let fps: Double = 10.0
     var liveGenerator = LiveHeatMapGenerator()
     
     
@@ -147,23 +149,6 @@ class ViewController: UIViewController {
     }
     
     @IBAction func processSomePoints(_ sender: Any) {
-//        var tempSingleValues: [SensorData] = []
-//        for i in 0..<dataPointsPerChunk {
-//            tempSingleValues.append(SensorData(x: csvData[i].x, y: csvData[i].y, z: csvData[i].values["690amp"]!))
-//        }
-//
-//        let oldProcessPointStart = Date()
-//        for j in 0..<dataPointsPerChunk {
-//            let index = clickCount * dataPointsPerChunk + j
-//            if index >= csvData.count {
-//                break
-//            }
-//            daGenerators["690amp"]!.processNewDataPoint(dataPoint: tempSingleValues[index])
-//        }
-//        let oldProcessPointEnd = Date()
-//        print("old point process", Int(oldProcessPointEnd.timeIntervalSince(oldProcessPointStart) * 1000), "ms")
-//
-       
         let maxIndex = clickCount * (dataPointsPerChunk + 1)
         if maxIndex < csvData.count {
             let dispatchStart = DispatchTime.now()
@@ -178,14 +163,19 @@ class ViewController: UIViewController {
             let processPointEnd = Date()
             //print("point process", Int(processPointEnd.timeIntervalSince(processPointStart) * 1000), "ms")
             
-            liveGenerator.processData(printBenchmarks: true)
+//            if clickCount == 50 {
+//                print("switching!")
+//                liveGenerator.changeZVals(zKey: "690phase")
+//            }
+            liveGenerator.processData(printBenchmarks: false)
+            
             
             let imageStart = Date()
             setLiveImage(generator: liveGenerator)
             let imageEnd = Date()
             //print("image time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
             
-            print("TOTAL TIME:", Int(imageEnd.timeIntervalSince(processPointStart) * 1000), "ms")
+            //print("TOTAL TIME:", Int(imageEnd.timeIntervalSince(processPointStart) * 1000), "ms")
             
             clickCount += 1
             if clickCount % 4 == 0 {
@@ -193,9 +183,9 @@ class ViewController: UIViewController {
             }
             
             // Uncomment to have it run in "live" time
-//            DispatchQueue.main.asyncAfter(deadline: dispatchStart + 0.1) {
-//                self.processSomePoints(sender)
-//            }
+            DispatchQueue.main.asyncAfter(deadline: dispatchStart + 0.1) {
+                self.processSomePoints(sender)
+            }
         }
 
 
@@ -210,13 +200,15 @@ class ViewController: UIViewController {
     
     func setLiveImage(generator: LiveHeatMapGenerator) {
         if showPlottedPoints {
-            self.frontImage.isHidden = false
-            self.frontImage.image = generator.createPointsPlottedOverlay()
+            self.middleImage.isHidden = false
+            self.middleImage.image = generator.createPointsPlottedOverlay()
         } else {
-            self.frontImage.isHidden = true
+            self.middleImage.isHidden = true
         }
-        self.frontImage.setNeedsDisplay()
+        self.middleImage.setNeedsDisplay()
         
+        self.topImage.image = generator.createCursorOverlay()
+        self.topImage.setNeedsDisplay()
         self.backImage.image = generator.createLiveHeatImage()
         self.backImage.setNeedsDisplay()
     }
@@ -281,75 +273,19 @@ class ViewController: UIViewController {
 //            )
             //daGenerators[key] = myGenerator
         }
-
-//        let allT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33, 34]
-//        let allZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34, 35]
-//
-//        let oldSpliner = CubicSpline(xPoints: allT, yPoints: allZ)
-//        let newSpliner = HeatMapSpline(tPoints: allT, zPoints: allZ, indexCount: 100)
-//
-//        let someT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33]
-//        let someZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34]
-//
-//        let partialSpliner = HeatMapSpline(tPoints: someT, zPoints: someZ, indexCount: 100, minIndexGap: 0.0)
-//        
-//        for i in stride(from: someT.first!, through: someT.last!, by: 1.0) {
-//            if newSpliner.zCalcs[Int(i)]!.value != partialSpliner.zCalcs[Int(i)]!.value {
-//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value, "diff!")
-//            } else {
-//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value)
-//            }
-//
-//        }
-//
-//        partialSpliner.addPoints(newTs: [34.0], newZs: [35.0])
-//
-//        for i in stride(from: allT.first!, through: allT.last!, by: 1.0) {
-//            if newSpliner.zCalcs[Int(i)]!.value != partialSpliner.zCalcs[Int(i)]!.value {
-//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value, "diff!")
-//            } else {
-//                print(Int(i), oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value, partialSpliner.zCalcs[Int(i)]!.value)
-//            }
-//
-//        }
         
-//        for i in stride(from: allT.first!, through: allT.last!, by: 1.0) {
-//            print(i, oldSpliner.interpolate(i), newSpliner.zCalcs[Int(i)]!.value)
-//        }
-        
-        //        let myX : [Double] = [0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 100.0]
-        //        let myY : [Double] = [30.0, 130.0, 150.0, 150.0, 170.0, 220.0, 320.0]
-        //        let myConstrainedSpline = ConstrainedCubicSpline(xPoints: myX, yPoints: myY)
-        
-//        xminTextField.text = String(generatorDefaults[0])
-//        xminTextField.accessibilityLabel = "xmin"
-//        xmaxTextField.text = String(generatorDefaults[1])
-//        xmaxTextField.accessibilityLabel = "xmax"
-//        yminTextField.text = String(generatorDefaults[2])
-//        yminTextField.accessibilityLabel = "ymin"
-//        ymaxTextField.text = String(generatorDefaults[3])
-//        ymaxTextField.accessibilityLabel = "ymax"
-//        resolutionTextField.text = String(generatorDefaults[4])
-//        resolutionTextField.accessibilityLabel = "resolution"
-//        interpolationTextField.text = String(generatorDefaults[5])
-//        interpolationTextField.accessibilityLabel = "interpolation"
-//        constrainedCubeToggle.setOn(true, animated: false)
-//        constrainedCubeToggle.accessibilityLabel = "constrained"
-//        exponentialWeightedToggle.setOn(true, animated: false)
-//        exponentialWeightedToggle.accessibilityLabel = "exponential"
-        
-        
-        // Tell apple to fuck off with their image interpolation, mine is better
-        frontImage.layer.magnificationFilter = CALayerContentsFilter.nearest
-        frontImage.layer.shouldRasterize = true // Maybe don't need this?
-        frontImage.isOpaque = true
-        frontImage.alpha = 0.5
+        // Heat map
         backImage.layer.magnificationFilter = CALayerContentsFilter.nearest
         backImage.layer.shouldRasterize = true
-        daImage3.layer.magnificationFilter = CALayerContentsFilter.nearest
-        daImage3.layer.shouldRasterize = true
-        daImage4.layer.magnificationFilter = CALayerContentsFilter.nearest
-        daImage4.layer.shouldRasterize = true
+        
+        // Points plotted
+        //middleImage.layer.magnificationFilter = CALayerContentsFilter.nearest
+        //middleImage.layer.shouldRasterize = true // Maybe don't need this?
+        middleImage.isOpaque = true
+        middleImage.alpha = 0.5
+
+//        backImage.layer.magnificationFilter = CALayerContentsFilter.nearest
+//        backImage.layer.shouldRasterize = true
         
         let singleGauss = Gaussian(xCenter: 50.0, yCenter: -30.0, amplitude: 100, sigmaX: 10, sigmaY: 10, theta: 0)
         

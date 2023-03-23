@@ -18,11 +18,14 @@ open class HeatMapSpline {
     var zCalcs: [InterpolatedDataPoint?]
     fileprivate var minIndexGap: Double
     var shouldUpdate: Bool = false
+    var distanceExponent: Double = 3
+    var distanceMultipler: Double = 1.0
     
-    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 0.0, maxInterpGap: Double = 20) {
+    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 0.0, distanceMultipler: Double = 1) {
 
         self.zCalcs = [InterpolatedDataPoint?](repeating: nil, count: indexCount)
         self.minIndexGap = minIndexGap
+        self.distanceMultipler = distanceMultipler
 
         assert(t.count == z.count, "Number of t points should be the same as z points")
 
@@ -267,15 +270,11 @@ open class HeatMapSpline {
             i -= 1
         }
         
-//        if t[i+1]-t[i] > maxInterpGap {
-//            return nil
-//        }
         let deltaX: Double = index - t[i]
         let af: Double = b[i]
         let cf: Double = c[i]
         let df: Double = d[i]
-        // TODO: Calculate distance correctly, something like t[i+1] - t[i]
-        return InterpolatedDataPoint(value: z[i] + af * deltaX + cf * pow(deltaX, 2) + df * pow(deltaX, 3), distance: t[i+1]-t[i])
+        return InterpolatedDataPoint(value: z[i] + af * deltaX + cf * pow(deltaX, 2) + df * pow(deltaX, 3), distance: (t[i+1]-t[i]) * distanceMultipler)
     }
 }
 

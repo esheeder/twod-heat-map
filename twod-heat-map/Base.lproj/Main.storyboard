@@ -27,7 +27,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="myx-DB-vH2" userLabel="Da Image3">
-                                <rect key="frame" x="1006" y="751.5" width="70" height="59"/>
+                                <rect key="frame" x="53" y="210.5" width="70" height="59"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="blu-t6-K4Z" userLabel="xminTextField">
@@ -184,6 +184,10 @@
                                     <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 </state>
                             </button>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="magazine.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="Ulq-3f-Jbu" userLabel="Top image">
+                                <rect key="frame" x="142" y="108.5" width="712" height="680"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemIndigoColor"/>
@@ -192,10 +196,11 @@
                         <outlet property="backImage" destination="WtR-ob-xSu" id="wyR-f3-KBy"/>
                         <outlet property="daImage3" destination="myx-DB-vH2" id="QEr-xc-lyP"/>
                         <outlet property="daImage4" destination="mnP-b9-woQ" id="Ebn-Js-V6Y"/>
-                        <outlet property="frontImage" destination="fBe-av-5d9" id="lNQ-DU-Kcu"/>
                         <outlet property="interpolationTextField" destination="iXY-4N-ttM" id="BFZ-a7-MON"/>
+                        <outlet property="middleImage" destination="fBe-av-5d9" id="lNQ-DU-Kcu"/>
                         <outlet property="resolutionTextField" destination="HzI-Qt-O8q" id="wKw-ep-8oe"/>
                         <outlet property="scaleImage" destination="0tQ-TB-VJk" id="t6I-uw-HQL"/>
+                        <outlet property="topImage" destination="Ulq-3f-Jbu" id="f38-ku-5Wx"/>
                         <outlet property="xmaxTextField" destination="mFm-Hp-raz" id="jY7-DL-wJt"/>
                         <outlet property="xminTextField" destination="blu-t6-K4Z" id="38K-dO-afn"/>
                         <outlet property="ymaxTextField" destination="yOu-b5-BfU" id="bP7-Wr-OTW"/>
