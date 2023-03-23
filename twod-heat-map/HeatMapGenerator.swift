@@ -52,7 +52,7 @@ public class HeatMapGenerator {
     var lastYIndex: Int = 0
     
     // The data points from above plotted on x, y coordinates. For any collisions, we add them to a running average at the point
-    var heatMapDataArray: [[WeightedDataPoint?]] = [[]]
+    var realDataValues: [[WeightedDataPoint?]] = [[]]
     
     // Spliners in 4 directions
     var horizontalSpliners: [HeatMapSpline] = []
@@ -68,6 +68,14 @@ public class HeatMapGenerator {
     var theOneBicubArray: [[WeightedDataPoint]] = [[]]
     
     var pixelsArray: [PixelData] = []
+    
+    var zValDict: [String: Double] = [:]
+    
+    
+    
+    
+    
+    
     
     // For each square size, need a square average array and bicub interp array
     var squareAverageSizes: [Int] = [3, 4]
@@ -150,7 +158,7 @@ public class HeatMapGenerator {
         let pixelHeight = (graphMaxY - graphMinY) * resolution
         
         if resetPlotted {
-            heatMapDataArray = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: pixelWidth), count: pixelHeight)
+            realDataValues = [[WeightedDataPoint?]](repeating: [WeightedDataPoint?](repeating: nil, count: pixelWidth), count: pixelHeight)
             pointsSet = 0
         }
 
@@ -343,8 +351,8 @@ public class HeatMapGenerator {
     }
     
     public func performDispatchQueueSplineInterpolation() {
-        let pixelWidth = self.heatMapDataArray[0].count
-        let pixelHeight = self.heatMapDataArray.count
+        let pixelWidth = self.realDataValues[0].count
+        let pixelHeight = self.realDataValues.count
         DispatchQueue.concurrentPerform(iterations: pixelHeight) {y in
             // Horizontal
             self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
@@ -378,10 +386,10 @@ public class HeatMapGenerator {
         for t in 0..<100000 {
             let xCoord = startX + t * xDir
             let yCoord = startY + t * yDir
-            if xCoord >= self.heatMapDataArray[0].count || yCoord >= self.heatMapDataArray.count || xCoord < 0 || yCoord < 0 {
+            if xCoord >= self.realDataValues[0].count || yCoord >= self.realDataValues.count || xCoord < 0 || yCoord < 0 {
                 break
             }
-            let val = self.heatMapDataArray[yCoord][xCoord]?.value
+            let val = self.realDataValues[yCoord][xCoord]?.value
             // Only add values that are more than 2mm away from the previous one
             if val != nil && (t - lastT) > 2 * self.resolution {
                 tPoints.append(Double(t))
@@ -401,8 +409,8 @@ public class HeatMapGenerator {
     }
     
     public func performWeightedAverage() {
-        let imageWidth = heatMapDataArray[0].count
-        let imageHeight = heatMapDataArray.count
+        let imageWidth = realDataValues[0].count
+        let imageHeight = realDataValues.count
         
         DispatchQueue.concurrentPerform(iterations: imageWidth * imageHeight) {i in
             weightPixel(x: i % imageWidth, y: i / imageWidth, imageHeight: imageHeight, imageWidth: imageWidth)
@@ -536,15 +544,15 @@ public class HeatMapGenerator {
         } else if direction == "vertical" {
             return verticalSpliners[xIndex]
         } else if direction == "upleft" {
-            if xIndex + yIndex < heatMapDataArray[0].count {
+            if xIndex + yIndex < realDataValues[0].count {
                 return upleftSpliners[xIndex + yIndex]
             }
             return upleftSpliners[xIndex + yIndex + 1]
         } else if direction == "upright" {
             if yIndex >= xIndex {
-                return uprightSpliners[heatMapDataArray.count - 1 + xIndex - yIndex]
+                return uprightSpliners[realDataValues.count - 1 + xIndex - yIndex]
             }
-            return uprightSpliners[heatMapDataArray.count + xIndex - yIndex]
+            return uprightSpliners[realDataValues.count + xIndex - yIndex]
         }
         print("hmmm, probably shouldn't be here")
         return horizontalSpliners[0]
@@ -555,9 +563,9 @@ public class HeatMapGenerator {
     // Print out raw x, y, z coordinates for CSV
     public func printRawData() {
         print("")
-        for i in 0..<heatMapDataArray[0].count {
-            for j in 0..<heatMapDataArray.count {
-                let value = heatMapDataArray[j][i]?.value
+        for i in 0..<realDataValues[0].count {
+            for j in 0..<realDataValues.count {
+                let value = realDataValues[j][i]?.value
                 if value != nil {
                     print(getAbsoluteXCoordInMmFromI(i), ",", getAbsoluteYCoordInMmFromJ(j) , ",", abs(Float(value!)), separator: "")
                 }
@@ -581,11 +589,11 @@ public class HeatMapGenerator {
         self.minY = Double.minimum(self.minY, dataPoint.y)
         self.maxY = Double.maximum(self.maxY, dataPoint.y)
         
-        if xIndex < 0 || xIndex >= heatMapDataArray[0].count || yIndex < 0 || yIndex >= heatMapDataArray.count {
+        if xIndex < 0 || xIndex >= realDataValues[0].count || yIndex < 0 || yIndex >= realDataValues.count {
 //            print("trying to plot point outside chart range at x=", dataPoint.x, "y=", dataPoint.y)
 //            print("xIndex=", xIndex, "yIndex=", yIndex)
-//            print("heatMapDataArray[0].count=", heatMapDataArray[0].count)
-//            print("heatMapDataArray.count=", heatMapDataArray.count)
+//            print("realDataValues[0].count=", realDataValues[0].count)
+//            print("realDataValues.count=", realDataValues.count)
             return
         }
         
@@ -605,13 +613,13 @@ public class HeatMapGenerator {
 
         
         //print("xPos is", xPos, "yPos is", yPos)
-        let weightedPoint = heatMapDataArray[yIndex][xIndex]
+        let weightedPoint = realDataValues[yIndex][xIndex]
         if weightedPoint == nil {
-            heatMapDataArray[yIndex][xIndex] = WeightedDataPoint(value: dataPoint.z, samplesTaken: 1)
+            realDataValues[yIndex][xIndex] = WeightedDataPoint(value: dataPoint.z, samplesTaken: 1)
             pointsSet += 1
         } else {
             let newVal = (weightedPoint!.value * Double(weightedPoint!.samplesTaken) + dataPoint.z) / Double(weightedPoint!.samplesTaken + 1)
-            heatMapDataArray[yIndex][xIndex] = WeightedDataPoint(value: newVal, samplesTaken: weightedPoint!.samplesTaken + 1)
+            realDataValues[yIndex][xIndex] = WeightedDataPoint(value: newVal, samplesTaken: weightedPoint!.samplesTaken + 1)
         }
         
 
@@ -631,8 +639,8 @@ public class HeatMapGenerator {
 //        let completion = BlockOperation {
 //            print("operations all done")
 //        }
-        let pixelWidth = self.heatMapDataArray[0].count
-        for y in 0..<heatMapDataArray.count{
+        let pixelWidth = self.realDataValues[0].count
+        for y in 0..<realDataValues.count{
             let operation = BlockOperation {
                 // Horizontal
                 self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
@@ -652,7 +660,7 @@ public class HeatMapGenerator {
 //            }
 //        }
         
-        for x in 0..<heatMapDataArray[0].count {
+        for x in 0..<realDataValues[0].count {
             let operation = BlockOperation {
                 // Vertical
                 self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
@@ -673,8 +681,8 @@ public class HeatMapGenerator {
     
     // THESE SPLINER INDICES ARE OLD/WRONG
 //    public func performSplineInterpolation() {
-//        let pixelWidth = self.heatMapDataArray[0].count
-//        for y in 0..<heatMapDataArray.count {
+//        let pixelWidth = self.realDataValues[0].count
+//        for y in 0..<realDataValues.count {
 //            // Horizontal
 //            self.cubicSplineInterpolateLine(startX: 0, startY: y, xDir: 1, yDir: 0, spliner: self.horizontalSpliners[y])
 //            // Down right
@@ -682,7 +690,7 @@ public class HeatMapGenerator {
 //            // Down left
 //            self.cubicSplineInterpolateLine(startX: pixelWidth - 1, startY: y, xDir: -1, yDir: 1, spliner: self.downleftSpliners[pixelWidth + y])
 //        }
-//        for x in 0..<heatMapDataArray[0].count {
+//        for x in 0..<realDataValues[0].count {
 //            // Vertical
 //            self.cubicSplineInterpolateLine(startX: x, startY: 0, xDir: 0, yDir: 1, spliner: self.verticalSpliners[x])
 //            // Down right
@@ -726,7 +734,7 @@ public class HeatMapGenerator {
      */
     // Square size in pixels
     private func bicubInterpSquare(xStartIndex: Int, yStartIndex: Int, squareSizeMm: Int) {
-//        if xStartIndex > heatMapDataArray[0].count || yStartIndex > heatMapDataArray.count {
+//        if xStartIndex > realDataValues[0].count || yStartIndex > realDataValues.count {
 //            return
 //        }
         
@@ -812,7 +820,7 @@ public class HeatMapGenerator {
         // Loop x and y from "0 to 1" by steps based on square size
         for i in 0..<squareSizePx {
             let xIndex = xStartIndex * squareSizePx + squareSizePx / 2 + i
-            if xIndex >= heatMapDataArray[0].count {
+            if xIndex >= realDataValues[0].count {
                 break
             }
             
@@ -823,7 +831,7 @@ public class HeatMapGenerator {
             
             for j in 0..<squareSizePx {
                 let yIndex = yStartIndex * squareSizePx + squareSizePx / 2 + j
-                if yIndex >= heatMapDataArray.count {
+                if yIndex >= realDataValues.count {
                     break
                 }
                 
@@ -915,8 +923,8 @@ public class HeatMapGenerator {
     
     // IMAGE GENERATION ONLY
 //    public func performUnconstrainedSplineWeightedAverage() {
-//        for x in 0..<heatMapDataArray[0].count {
-//            for y in 0..<heatMapDataArray.count {
+//        for x in 0..<realDataValues[0].count {
+//            for y in 0..<realDataValues.count {
 //                let verticalVal = unconstrainedVertical[y][x]
 //                let horizontalVal = unconstrainedHorizontal[y][x]
 //                let diag1Val = unconstrainedDownright[y][x]
@@ -1089,8 +1097,8 @@ public class HeatMapGenerator {
         unconstrainedDownleft = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         unconstrainedDownright = [[InterpolatedDataPoint?]](repeating: [InterpolatedDataPoint?](repeating: nil, count: (graphMaxX - graphMinX) * resolution), count: (graphMaxY - graphMinY) * resolution)
         
-        let imageWidth = heatMapDataArray[0].count
-        let imageHeight = heatMapDataArray.count
+        let imageWidth = realDataValues[0].count
+        let imageHeight = realDataValues.count
         
         for x in 0..<imageWidth {
             for y in 0..<imageHeight {
@@ -1302,29 +1310,29 @@ public class HeatMapGenerator {
     
     public func performLinearInterpolation() {
         //linearInterpolateLine(xStart: 50, yStart: 0, xDir: 0, yDir: 1)
-        for x in 0..<heatMapDataArray[0].count {
+        for x in 0..<realDataValues[0].count {
             // Interpolate down
             linearInterpolateLine(xStart: x, yStart: 0, xDir: 0, yDir: 1)
             // Down right
             linearInterpolateLine(xStart: x, yStart: 0, xDir: 1, yDir: 1)
             // Down left
-            linearInterpolateLine(xStart: heatMapDataArray[0].count - 1 - x, yStart: 0, xDir: -1, yDir: 1)
+            linearInterpolateLine(xStart: realDataValues[0].count - 1 - x, yStart: 0, xDir: -1, yDir: 1)
         }
-        for y in 0..<heatMapDataArray.count {
+        for y in 0..<realDataValues.count {
             // Interpolate right
             linearInterpolateLine(xStart: 0, yStart: y, xDir: 1, yDir: 0)
             // Down right
             linearInterpolateLine(xStart: 0, yStart: y, xDir: 1, yDir: 1)
             // Down left
-            linearInterpolateLine(xStart: heatMapDataArray[0].count - 1, yStart: y, xDir: -1, yDir: 1)
+            linearInterpolateLine(xStart: realDataValues[0].count - 1, yStart: y, xDir: -1, yDir: 1)
         }
         performWeightedLinearInterpolation()
     }
 
     // IMAGE GENERATION ONLY
     public func performWeightedLinearInterpolation() {
-//        for x in 0..<heatMapDataArray[0].count {
-//            for y in 0..<heatMapDataArray.count {
+//        for x in 0..<realDataValues[0].count {
+//            for y in 0..<realDataValues.count {
 //                let verticalVal = verticalLinear[y][x]
 //                let horizontalVal = horizontalLinear[y][x]
 //                let diag1Val = downrightDiagonalLinear[y][x]
@@ -1395,8 +1403,8 @@ public class HeatMapGenerator {
     
     //    IMAGE GENERATION ONLY
     //    public func performUnconstrainedSplineWeightedAverage() {
-    //        for x in 0..<heatMapDataArray[0].count {
-    //            for y in 0..<heatMapDataArray.count {
+    //        for x in 0..<realDataValues[0].count {
+    //            for y in 0..<realDataValues.count {
     //                let verticalVal = unconstrainedVertical[y][x]
     //                let horizontalVal = unconstrainedHorizontal[y][x]
     //                let diag1Val = unconstrainedDownright[y][x]
@@ -1476,8 +1484,8 @@ public class HeatMapGenerator {
 //                //print("oob", neighborX, neighborY)
 //                break
 //            }
-//            let currentVal = heatMapDataArray[yCoord][xCoord]
-//            let neighbor = heatMapDataArray[neighborY][neighborX]
+//            let currentVal = realDataValues[yCoord][xCoord]
+//            let neighbor = realDataValues[neighborY][neighborX]
 //            if currentVal != nil && neighbor != nil {
 //                let trueVal = InterpolatedDataPoint(value: currentVal!.value, distance: 0.01)
 //                verticalLinear[yCoord][xCoord] = trueVal
@@ -1518,7 +1526,7 @@ public class HeatMapGenerator {
             if isOutOfBounds(x: xToCheck, y: yToCheck) {
                 break
             }
-            let checkedVal = heatMapDataArray[yToCheck][xToCheck]
+            let checkedVal = realDataValues[yToCheck][xToCheck]
             if checkedVal != nil {
 //                let distance: Double
 //                if xDir == 0 || yDir == 0 {
@@ -1533,7 +1541,7 @@ public class HeatMapGenerator {
     }
     
     public func isOutOfBounds(x: Int, y: Int) -> Bool {
-        return x < 0 || y < 0 || x >= heatMapDataArray[0].count || y >= heatMapDataArray.count
+        return x < 0 || y < 0 || x >= realDataValues[0].count || y >= realDataValues.count
     }
     
 }
@@ -1557,27 +1565,6 @@ public class HeatMapGenerator {
 //    return generateImageFromPixels(pixelData: pixels, width: width, height: 256)
 //
 //}
-
-public protocol DataPoint {
-    var value: Double { get set }
-}
-
-public struct WeightedDataPoint : DataPoint {
-    public var value: Double
-    public var samplesTaken: Int
-}
-
-public struct InterpolatedDataPoint : DataPoint {
-    public var value: Double
-    public var distance: Double // Distance = space between 2 interpolated points, probably in pixels
-}
-
-public struct PixelData {
-    var a: UInt8
-    var r: UInt8
-    var g: UInt8
-    var b: UInt8
-}
 
 let mPlasmaColormap : [PixelData] = [
     PixelData(a: 255, r: 12, g: 7, b: 135),PixelData(a: 255, r: 16, g: 7, b: 136),

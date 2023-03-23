@@ -7,7 +7,6 @@
 
 import UIKit
 import LFHeatMap
-import SMHeatMapView
 import ImageIO
 import MobileCoreServices
 import Foundation
@@ -62,8 +61,6 @@ let maxInterpGap: Double = 100.0
 // I've generally found that the first 3-5 can have bad data that throw off the heat map so I skip them
 let pointsToSkip = 20
 
-
-
 // Can set to false to only do data plotting and speed things up. Useful for debugging, but you probably won't need it
 let doInterp = true
 
@@ -72,47 +69,45 @@ let doInterp = true
 // Can set min/max values to throw away any data points that fall outside of those values, useful for more contrast in phase plots
 let xCoordIndex = 72
 let yCoordIndex = 73
-let wavelengthParams = [
-    //"gauss": ["min": nil, "max": nil, "csvIndex": 2],
-    //"trueGauss": ["min": nil, "max": nil, "csvIndex": nil]
-    "690amp": ["min": nil, "max": nil, "csvIndex": 3],
-//    "750amp": ["min": nil, "max": nil, "csvIndex": 3+12],
-//    "808amp": ["min": nil, "max": nil, "csvIndex": 3+24],
-//    "850amp": ["min": nil, "max": nil, "csvIndex": 3+36],
-//    "940amp": ["min": nil, "max": nil, "csvIndex": 3+48],
-//    "980amp": ["min": nil, "max": nil, "csvIndex": 3+60],
-//    "690phase": ["min": 3.7, "max": 4.3, "csvIndex": 8],
-//    "750phase": ["min": 3.8, "max": 4.5, "csvIndex": 8+12],
-//    "808phase": ["min": 4.6, "max": 5.2, "csvIndex": 8+24],
-//    "850phase": ["min": 4.4, "max": 4.9, "csvIndex": 8+36],
-//    "940phase": ["min": 3.7, "max": 4.2, "csvIndex": 8+48],
-//    "980phase": ["min": 4.8, "max": 5.2, "csvIndex": 8+60],
+let wavelengthBounds = [
+    "690amp": nil,
+    "750amp": nil,
+    "808amp": nil,
+    "850amp": nil,
+    "940amp": nil,
+    "980amp": nil,
+    "690phase": zBound(min: 3.7, max: 4.3),
+    "750phase": zBound(min: 3.8, max: 4.5),
+    "808phase": zBound(min: 4.6, max: 5.2),
+    "850phase": zBound(min: 4.4, max: 4.9),
+    "940phase": zBound(min: 3.7, max: 4.2),
+    "980phase": zBound(min: 4.8, max: 5.2)
 ]
 
-
+let csvIndices = [
+    "690amp": 3,
+    "750amp": 3+12,
+    "808amp": 3+24,
+    "850amp": 3+36,
+    "940amp": 3+48,
+    "980amp": 3+60,
+    "690phase": 8,
+    "750phase": 8+12,
+    "808phase": 8+24,
+    "850phase": 8+36,
+    "940phase": 8+48,
+    "980phase": 8+60
+]
 
 class ViewController: UIViewController {
     
-    @IBOutlet weak var daImage: UIImageView!
-    @IBOutlet weak var daImage2: UIImageView!
+    @IBOutlet weak var frontImage: UIImageView!
+    @IBOutlet weak var backImage: UIImageView!
     
     @IBOutlet weak var daImage3: UIImageView!
     @IBOutlet weak var daImage4: UIImageView!
     
     @IBOutlet weak var scaleImage: UIImageView!
-    
-//    var theGenerator = HeatMapGenerator(
-//        minX: generatorDefaults[0],
-//        maxX: generatorDefaults[1],
-//        minY: generatorDefaults[2],
-//        maxY: generatorDefaults[3],
-//        resolution: generatorDefaults[4],
-//        interpSquareSizes: squareSizes,
-//        dangerGap: maxInterpGap,
-//        zCsvIndex: 3,
-//        zFloor: nil,
-//        zCeil: nil
-//    )
 
     
     @IBOutlet weak var xminTextField: UITextField!
@@ -122,43 +117,14 @@ class ViewController: UIViewController {
     @IBOutlet weak var resolutionTextField: UITextField!
     @IBOutlet weak var interpolationTextField: UITextField!
     
-    @IBOutlet weak var constrainedCubeToggle: UISwitch!
-    @IBOutlet weak var exponentialWeightedToggle: UISwitch!
-    
-
-    @IBAction func textFieldChanged(_ sender: UITextField) {
-//        print("sender=", sender.accessibilityLabel)
-//        print("sender.text=", sender.text)
-//        switch sender.accessibilityLabel {
-//        case "resolution":
-//            theGenerator.resolution = Int(sender.text ?? "4") ?? 4
-//        case "interpolation":
-//            theGenerator.interpSquareSize = Int(sender.text ?? "20") ?? 10
-//        case "xmin":
-//            theGenerator.graphMinX = (Int(sender.text ?? "-1")!)
-//        case "xmax":
-//            theGenerator.graphMaxX = (Int(sender.text ?? "11")!)
-//        case "ymin":
-//            theGenerator.graphMinY = (Int(sender.text ?? "-1")!)
-//        case "ymax":
-//            theGenerator.graphMaxY = (Int(sender.text ?? "11")!)
-//        case .none:
-//            break
-//        case .some(_):
-//            break
-//        }
-//        theGenerator.regeneratePlots()
-        //setImages()
-    }
-    
-    
     
     @IBAction func toggleToggled(_ sender: Any) {
         print("toggle toggled")
         showRawPoints = !showRawPoints
-        setLiveImage(generator: daGenerators["690amp"]!)
+        setLiveImage(generator: liveGenerator)
     }
-    var showRawPoints = true
+    
+    var showRawPoints = false
     var clickCount = 0
     let dataPoints: [SensorData] = []
     var graphBounds = [
@@ -168,8 +134,9 @@ class ViewController: UIViewController {
         "yMax": 0,
     ]
     var daGenerators: [String: HeatMapGenerator] = [:]
-    var csvData: [SensorData] = []
-    let dataPointsPerChunk = 500
+    var csvData: [MultiSensorData] = []
+    let dataPointsPerChunk = 2000
+    var liveGenerator = LiveHeatMapGenerator()
     
     
     @IBAction func saveLinearImages(_ sender: Any) {
@@ -179,35 +146,56 @@ class ViewController: UIViewController {
     }
     
     @IBAction func processSomePoints(_ sender: Any) {
-        //print("clicky")
+//        var tempSingleValues: [SensorData] = []
+//        for i in 0..<dataPointsPerChunk {
+//            tempSingleValues.append(SensorData(x: csvData[i].x, y: csvData[i].y, z: csvData[i].values["690amp"]!))
+//        }
+//
+//        let oldProcessPointStart = Date()
+//        for j in 0..<dataPointsPerChunk {
+//            let index = clickCount * dataPointsPerChunk + j
+//            if index >= csvData.count {
+//                break
+//            }
+//            daGenerators["690amp"]!.processNewDataPoint(dataPoint: tempSingleValues[index])
+//        }
+//        let oldProcessPointEnd = Date()
+//        print("old point process", Int(oldProcessPointEnd.timeIntervalSince(oldProcessPointStart) * 1000), "ms")
+//
+       
+        let maxIndex = clickCount * (dataPointsPerChunk + 1)
+        if maxIndex < csvData.count {
+            let processPointStart = Date()
+            for j in 0..<dataPointsPerChunk {
+                let index = clickCount * dataPointsPerChunk + j
+                if index >= csvData.count {
+                    break
+                }
+                liveGenerator.processNewDataPoint(dataPoint: csvData[index])
+            }
+            let processPointEnd = Date()
+            //print("point process", Int(processPointEnd.timeIntervalSince(processPointStart) * 1000), "ms")
+            
+            liveGenerator.processData(printBenchmarks: true)
+            
+            let imageStart = Date()
+            setLiveImage(generator: liveGenerator)
+            let imageEnd = Date()
+            print("image time:", Int(imageEnd.timeIntervalSince(imageStart) * 1000), "ms")
+            
+            print("TOTAL TIME:", Int(imageEnd.timeIntervalSince(processPointEnd) * 1000), "ms")
+            
+            clickCount += 1
+            if clickCount % 4 == 0 {
+                //self.showRawPoints = !self.showRawPoints
+            }
+            
+            // Uncomment to have it run in "live" time
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+//                self.processSomePoints(sender)
+//            }
+        }
 
-        
-        let daGen = daGenerators["690amp"]!
-        
-        for j in 0...dataPointsPerChunk {
-            let index = clickCount * dataPointsPerChunk + j
-            if index >= csvData.count {
-                break
-            }
-            daGen.processNewDataPoint(dataPoint: csvData[index])
-        }
-        //let start1 = Date()
-        daGen.processData()
-        //let end1 = Date()
-        //print("process time:", Int(end1.timeIntervalSince(start1) * 1000), "ms")
-        //let start2 = Date()
-        setLiveImage(generator: daGenerators["690amp"]!)
-        //let end2 = Date()
-        //print("image time:", Int(end2.timeIntervalSince(start2) * 1000), "ms")
-        clickCount += 1
-        //print(clickCount * dataPointsPerChunk)
-        
-        // Uncomment to have it run in "live" time
-        if clickCount * dataPointsPerChunk < 100000 {
-            DispatchQueue.main.asyncAfter(deadline: .now()) {
-                self.processSomePoints(sender)
-            }
-        }
 
     }
     
@@ -218,24 +206,34 @@ class ViewController: UIViewController {
 //        daImage4.image = theGenerator.createHeatMapImageFromDataArray(dataArray: theGenerator.bicubicInterpDataArray, showSquares: true)
     }
     
-    func setLiveImage(generator: HeatMapGenerator) {
-        //print("drawing image")
+    func setLiveImage(generator: LiveHeatMapGenerator) {
         if showRawPoints {
-            self.daImage2.isHidden = false
-            self.daImage2.image = generator.createHeatMapImageFromDataArray(dataArray: generator.heatMapDataArray)
+            self.frontImage.isHidden = false
+            self.frontImage.image = generator.createPointsPlottedOverlay()
         } else {
-            self.daImage2.isHidden = true
+            self.frontImage.isHidden = true
         }
+        self.frontImage.setNeedsDisplay()
         
-        self.daImage2.setNeedsDisplay()
-        self.daImage.image = generator.createLiveImage()
-        self.daImage.setNeedsDisplay()
-        
+        self.backImage.image = generator.createLiveHeatImage()
+        self.backImage.setNeedsDisplay()
     }
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        liveGenerator = LiveHeatMapGenerator(
+            minX: -10,
+            maxX: 90,
+            minY: -70,
+            maxY: 10,
+            resolution: interpResolution,
+            interpSquareSize: 3,
+            zValKey: "690amp",
+            zBounds: wavelengthBounds)
+        
+        csvData = getCsvData(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, zIndices: csvIndices)
+        print("csv points read:", csvData.count)
+        
         let bounds = getXAndYBoundsFromCsvFile(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex)
         
         if bounds == nil {
@@ -252,29 +250,35 @@ class ViewController: UIViewController {
         ]
         
         // Create a HeatMapGenerator for each wavelength we want
-        for key in Array(wavelengthParams.keys) {
-            let params = wavelengthParams[key]!
-            let myGenerator = HeatMapGenerator(
-//                minX: -10,
-//                maxX: 90,
-//                minY: -70,
-//                maxY: 10,
-                minX: graphBounds["xMin"]!,
-                maxX: graphBounds["xMax"]!,
-                minY: graphBounds["yMin"]!,
-                maxY: graphBounds["yMax"]!,
-                resolution: interpResolution,
-                interpSquareSizes: squareSizes,
-                dangerGap: maxInterpGap,
-                zCsvIndex: params["csvIndex"]! as! Int,
-                zFloor: params["min"] as? Double,
-                zCeil: params["max"] as? Double
-            )
-            daGenerators[key] = myGenerator
-            let daGen = daGenerators[key]!
+        daGenerators["690amp"] = HeatMapGenerator(
+                            minX: -10,
+                            maxX: 120,
+                            minY: -100,
+                            maxY: 10,
+                            resolution: 2,
+                            interpSquareSizes: [3],
+                            dangerGap: maxInterpGap,
+                            zCsvIndex:3,
+                            zFloor: nil,
+                            zCeil: nil
+                        )
+        for key in Array(wavelengthBounds.keys) {
+            let params = wavelengthBounds[key]!
+//            let myGenerator = HeatMapGenerator(
+//                minX: graphBounds["xMin"]!,
+//                maxX: graphBounds["xMax"]!,
+//                minY: graphBounds["yMin"]!,
+//                maxY: graphBounds["yMax"]!,
+//                resolution: interpResolution,
+//                interpSquareSizes: squareSizes,
+//                dangerGap: maxInterpGap,
+//                zCsvIndex: params["csvIndex"]! as! Int,
+//                zFloor: params["min"] as? Double,
+//                zCeil: params["max"] as? Double
+//            )
+            //daGenerators[key] = myGenerator
         }
-        csvData = getCsvData(filename: fileName, xIndex: xCoordIndex, yIndex: yCoordIndex, zIndex: 3)
-        print("csv read:", csvData.count)
+
 //        let allT = [2.0, 6.0, 8.0, 10.0, 13.0, 18.0, 22.0, 30.0, 31, 32, 33, 34]
 //        let allZ = [3.0, 8.0, 9.0, 16.0, 12.0, 7.0, 13.0, 20.0, 28, 32, 34, 35]
 //
@@ -333,10 +337,12 @@ class ViewController: UIViewController {
         
         
         // Tell apple to fuck off with their image interpolation, mine is better
-        daImage.layer.magnificationFilter = CALayerContentsFilter.nearest
-        daImage.layer.shouldRasterize = true // Maybe don't need this?
-        daImage2.layer.magnificationFilter = CALayerContentsFilter.nearest
-        daImage2.layer.shouldRasterize = true
+        frontImage.layer.magnificationFilter = CALayerContentsFilter.nearest
+        frontImage.layer.shouldRasterize = true // Maybe don't need this?
+        frontImage.isOpaque = true
+        frontImage.alpha = 0.5
+        backImage.layer.magnificationFilter = CALayerContentsFilter.nearest
+        backImage.layer.shouldRasterize = true
         daImage3.layer.magnificationFilter = CALayerContentsFilter.nearest
         daImage3.layer.shouldRasterize = true
         daImage4.layer.magnificationFilter = CALayerContentsFilter.nearest
@@ -403,25 +409,21 @@ class ViewController: UIViewController {
 //        )
         
         // Create a HeatMapGenerator for each wavelength we want
-        for key in Array(wavelengthParams.keys) {
-            let params = wavelengthParams[key]!
-            let myGenerator = HeatMapGenerator(
-//                minX: -10,
-//                maxX: 90,
-//                minY: -70,
-//                maxY: 10,
-                minX: graphBounds["xMin"]!,
-                maxX: graphBounds["xMax"]!,
-                minY: graphBounds["yMin"]!,
-                maxY: graphBounds["yMax"]!,
-                resolution: interpResolution,
-                interpSquareSizes: squareSizes,
-                dangerGap: maxInterpGap,
-                zCsvIndex: params["csvIndex"]! as! Int,
-                zFloor: params["min"] as? Double,
-                zCeil: params["max"] as? Double
-            )
-            daGenerators[key] = myGenerator
+        for key in Array(wavelengthBounds.keys) {
+            let params = wavelengthBounds[key]!
+//            let myGenerator = HeatMapGenerator(
+//                minX: graphBounds["xMin"]!,
+//                maxX: graphBounds["xMax"]!,
+//                minY: graphBounds["yMin"]!,
+//                maxY: graphBounds["yMax"]!,
+//                resolution: interpResolution,
+//                interpSquareSizes: squareSizes,
+//                dangerGap: maxInterpGap,
+//                zCsvIndex: params["csvIndex"]! as! Int,
+//                zFloor: params["min"] as? Double,
+//                zCeil: params["max"] as? Double
+//            )
+            //daGenerators[key] = myGenerator
         }
         
         // Process CSV file and store the proper z values in each HeatMapGenerator
@@ -535,8 +537,8 @@ class ViewController: UIViewController {
         }
     }
     
-    func getCsvData(filename: String, xIndex: Int, yIndex: Int, zIndex: Int) -> [SensorData] {
-        var data: [SensorData] = []
+    func getCsvData(filename: String, xIndex: Int, yIndex: Int, zIndices: [String: Int]) -> [MultiSensorData] {
+        var data: [MultiSensorData] = []
         // Read the csv file and save each row of data as a triplet
         guard let filepath = Bundle.main.path(forResource: filename, ofType: "csv") else {
             return []
@@ -554,8 +556,11 @@ class ViewController: UIViewController {
             // Multiply by 10 to convert cm to mm
             let xCoord = 10.0 * Double(rowData[xIndex])!
             let yCoord = 10.0 * Double(rowData[yIndex])!
-            let z = abs(Double(rowData[zIndex])!)
-            let sensorDataPoint = SensorData(x: xCoord, y: yCoord, z: z)
+            var zVals: [String : Double] = [:]
+            for (wavelength, csvIndex) in zIndices {
+                zVals[wavelength] = abs(Double(rowData[csvIndex])!)
+            }
+            let sensorDataPoint = MultiSensorData(x: xCoord, y: yCoord, values: zVals)
             data.append(sensorDataPoint)
         }
         return data
@@ -613,7 +618,7 @@ class ViewController: UIViewController {
             }
         } catch { print(error) }
         
-        let rawDataImage = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray, showSquares: true, magFactor: magnifyingFactor)
+        let rawDataImage = daGen.createHeatMapImageFromDataArray(dataArray: daGen.realDataValues, showSquares: true, magFactor: magnifyingFactor)
         
         var images: [String: UIImage] = [
             //"0_trueImage": trueGenerator.createHeatMapImageFromDataArray(dataArray: trueGenerator.heatMapDataArray),
@@ -644,7 +649,7 @@ class ViewController: UIViewController {
             
             "3_squareAverage": daGen.createHeatMapImageFromDataArray(dataArray: daGen.theOneSquareAverageArray, showSquares: false, magFactor: magnifyingFactor * interpResolution * daGen.interpSquareSize),
             "4_bicubAverage": daGen.createHeatMapImageFromDataArray(dataArray: daGen.theOneBicubArray, showSquares: false, magFactor: magnifyingFactor),
-            "5_liveImage": daGen.createLiveImage()
+            //"5_liveImage": daGen.createLiveHeatImage()
             
             //
             //"9a1_horizontalLinear": daGen.createHeatMapImageFromDataArray(dataArray: daGen.horizontalLinear, magFactor: magnifyingFactor),
@@ -701,7 +706,7 @@ class ViewController: UIViewController {
         
         // Add raw data image
         let rawImageName = "\(key)_a_raw.png"
-        images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray, showSquares: true, magFactor: magnifyingFactor)
+        images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.realDataValues, showSquares: true, magFactor: magnifyingFactor)
         // Add interp images
         for size in summarySizes {
             let interpImageName = "\(key)_b_\(size)x\(size).png"
@@ -735,7 +740,7 @@ class ViewController: UIViewController {
             let daGen = daGens[key]!
             // Add raw data image
             let rawImageName = "\(key)_a_raw.png"
-            images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.heatMapDataArray)
+            images[rawImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.realDataValues)
             // Add interp image
             let interpImageName = "\(key)_b_2x2.png"
             images[interpImageName] = daGen.createHeatMapImageFromDataArray(dataArray: daGen.bicubInterpSizeToArray[2]!)
@@ -912,83 +917,8 @@ class ViewController: UIViewController {
     
 }
 
-let testData : [SensorData] = [
-    SensorData(x: -6.0, y: 0.0, z: 250),
-    SensorData(x: -6.0, y: 2.0, z: 250),
-    SensorData(x: -6.0, y: 4.0, z: 250),
-    SensorData(x: -6.0, y: 6.0, z: 250),
-    SensorData(x: -6.0, y: 8.0, z: 250),
-    SensorData(x: -6.0, y: 10.0, z: 250),
-    
-    SensorData(x: -4.0, y: 0.0, z: 230),
-    SensorData(x: -4.0, y: 2.0, z: 170),
-    SensorData(x: -4.0, y: 4.0, z: 30),
-    SensorData(x: -4.0, y: 6.0, z: 80),
-    SensorData(x: -4.0, y: 8.0, z: 250),
-    SensorData(x: -4.0, y: 10.0, z: 250),
-    
-    SensorData(x: -2.0, y: 0.0, z: 40),
-    SensorData(x: -2.0, y: 2.0, z: 80),
-    SensorData(x: -2.0, y: 4.0, z: 120),
-    SensorData(x: -2.0, y: 6.0, z: 200),
-    SensorData(x: -2.0, y: 8.0, z: 250),
-    SensorData(x: -2.0, y: 10.0, z: 250),
-    
-    SensorData(x: 0.0, y: 0.0, z: 50),
-    SensorData(x: 0.0, y: 2.0, z: 190),
-    SensorData(x: 0.0, y: 4.0, z: 130),
-    SensorData(x: 0.0, y: 6.0, z: 60),
-    SensorData(x: 0.0, y: 8.0, z: 250),
-    SensorData(x: 0.0, y: 10.0, z: 250),
-    
-    SensorData(x: 2.0, y: 0.0, z: 250),
-    SensorData(x: 2.0, y: 2.0, z: 250),
-    SensorData(x: 2.0, y: 4.0, z: 250),
-    SensorData(x: 2.0, y: 6.0, z: 250),
-    SensorData(x: 2.0, y: 8.0, z: 250),
-    SensorData(x: 2.0, y: 10.0, z: 250),
-    
-    SensorData(x: 4.0, y: 0.0, z: 250),
-    SensorData(x: 4.0, y: 2.0, z: 250),
-    SensorData(x: 4.0, y: 4.0, z: 250),
-    SensorData(x: 4.0, y: 6.0, z: 250),
-    SensorData(x: 4.0, y: 8.0, z: 250),
-    SensorData(x: 4.0, y: 10.0, z: 250)
-]
-
 public struct SensorData {
     var x: Double
     var y: Double
     var z: Double
 }
-
-// Subsampled gaussian
-//guard let filepath2 = Bundle.main.path(forResource: "eric_gauss_subsample_2x", ofType: "csv") else {
-//    return
-//}
-//var csvAsString2 = ""
-//do {
-//    csvAsString2 = try String(contentsOfFile: filepath2)
-//} catch {
-//    print(error)
-//    return
-//}
-//let csvData2 = csvAsString2.components(separatedBy: "\n")
-//
-////var swirlPoints: [Point]  = Array(repeating: Point(x: 0, y: 0), count: 792)
-//
-//for i in 0..<csvData2.count {
-//    let rowData = csvData2[i].components(separatedBy: ",")
-//    if rowData.count == 3 {
-//        let x = Double(rowData[0])!
-//        let y = Double(rowData[1])!
-//        //swirlPoints[i] = Point(x: x, y: y)
-//        //let z = 0 - gauss1.getVal(x, y) - gauss2.getVal(x, y)
-//        var z: Double = 0.0
-//        for gaussian in daGaussians {
-//            z -= gaussian.getVal(x, y)
-//        }
-//        let sensorDataPoint = SensorData(x: x, y:  y, z: z)
-//        //theGenerator.processNewDataPoint(dataPoint: sensorDataPoint)
-//    }
-//}

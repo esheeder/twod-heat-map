@@ -10,6 +10,7 @@
 		0711E4EC29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0711E4EB29B7F64D00B70F86 /* tum5-30mm-0-amplitude-phase.csv */; };
 		0711E4F029BBD04400B70F86 /* eric_spiral_subsample_2x.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0711E4EF29BBD04400B70F86 /* eric_spiral_subsample_2x.csv */; };
 		071F671A29C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv in Resources */ = {isa = PBXBuildFile; fileRef = 071F671929C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */; };
+		0724564229CA6639008F2BC7 /* LiveHeatMapGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0724564129CA6639008F2BC7 /* LiveHeatMapGenerator.swift */; };
 		07897252299177F300B81626 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897251299177F300B81626 /* AppDelegate.swift */; };
 		07897254299177F300B81626 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897253299177F300B81626 /* SceneDelegate.swift */; };
 		07897256299177F300B81626 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07897255299177F300B81626 /* ViewController.swift */; };
@@ -50,6 +51,7 @@
 		0711E4EF29BBD04400B70F86 /* eric_spiral_subsample_2x.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = eric_spiral_subsample_2x.csv; sourceTree = "<group>"; };
 		071F671829C11E6A003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; lastKnownFileType = text; name = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; path = "../../../../Downloads/interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
 		071F671929C12268003D6289 /* interpolation-swirl-in-100000-01-amplitude-phase.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "interpolation-swirl-in-100000-01-amplitude-phase.csv"; sourceTree = "<group>"; };
+		0724564129CA6639008F2BC7 /* LiveHeatMapGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveHeatMapGenerator.swift; sourceTree = "<group>"; };
 		0789724E299177F300B81626 /* twod-heat-map.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "twod-heat-map.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07897251299177F300B81626 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		07897253299177F300B81626 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 				07897294299AF7F100B81626 /* ConstrainedCubicSpline.swift */,
 				078972A2299DAA9F00B81626 /* Gaussian.swift */,
 				07F2564029C3779200A2767E /* HeatMapSpline.swift */,
+				0724564129CA6639008F2BC7 /* LiveHeatMapGenerator.swift */,
 			);
 			path = "twod-heat-map";
 			sourceTree = "<group>";
@@ -382,6 +385,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0724564229CA6639008F2BC7 /* LiveHeatMapGenerator.swift in Sources */,
 				07897256299177F300B81626 /* ViewController.swift in Sources */,
 				07897252299177F300B81626 /* AppDelegate.swift in Sources */,
 				0789725C299177F300B81626 /* twod_heat_map.xcdatamodeld in Sources */,

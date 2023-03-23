@@ -19,14 +19,14 @@ open class HeatMapSpline {
     fileprivate var minIndexGap: Double
     var shouldUpdate: Bool = false
     
-    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 0.0, maxInterpGap: Double = 20) {
+    public init(tPoints t: [Double] = [], zPoints z: [Double] = [], indexCount: Int, minIndexGap: Double = 4.0, maxInterpGap: Double = 20) {
 
         self.zCalcs = [InterpolatedDataPoint?](repeating: nil, count: indexCount)
         self.minIndexGap = minIndexGap
 
         assert(t.count == z.count, "Number of t points should be the same as z points")
 
-        addPoints(newTs: t, newZs: z)
+        setPoints(newTs: t, newZs: z)
 
     }
     
@@ -52,98 +52,7 @@ open class HeatMapSpline {
         computeInterpVals(tempTs.first!, tempTs.last!)
     }
     
-    public func addPoints(newTs: [Double], newZs: [Double]) {
-        if newTs.count == 0 {
-            //print("no new vals, just returning")
-            return
-        }
-        // Case for first time adding values
-        if self.t.count == 0 {
-            setPoints(newTs: newTs, newZs: newZs)
-            return
-        }
-        // Add values to t and z in smart way while sorting them and respecting the minIndexGap,
-        // then maybe need to set vals to nil? Probably not since we will recalculate them
-        // Will also want to figure out what our range of values to recalculate are
-        var oldCounter = 0
-        var newCounter = 0
-        var firstInsertIndex: Int = -1
-        var lastInsertIndex: Int = -1
-        
-        var allTs: [Double] = []
-        var allZs: [Double] = []
-        //var allBs: [Double] = []
-        
-        
-        for i in 0..<(newTs.count + self.t.count) {
-            // Case for only have old values left
-            if newCounter == newTs.count {
-                print("done with new vals, just appending olds")
-                for j in oldCounter..<self.t.count {
-                    if self.t[j] - allTs.last! > minIndexGap {
-                        allTs.append(self.t[j])
-                        allZs.append(self.z[j])
-                    }
-                }
-                break
-            }
-            // Case for only have new values
-            if oldCounter == self.t.count {
-                print("done with old vals, just appending news")
-                for j in newCounter..<newTs.count {
-                    if newTs[j] - allTs.last! > minIndexGap {
-                        allTs.append(newTs[j])
-                        allZs.append(newZs[j])
-                    }
-                }
-                break
-            }
-            
-            let oldT = self.t[oldCounter]
-            let newT = newTs[newCounter]
-            // Case for using oldT
-            if oldT < newT {
-                oldCounter += 1
-                if i > 0 && (oldT - allTs[i-1] <= self.minIndexGap) {
-                    print("skipping over old", oldT)
-                    continue
-                }
-                // Insert old T
-                print("adding", oldT, "from old")
-                allTs.append(oldT)
-                allZs.append(self.z[oldCounter - 1])
-                
-                // TODO: Could maybe copy over old b/c/d values here?
-//                if allNewInserted && lastInsertIndex + 1 < i {
-//
-//                }
-            } else {
-                newCounter += 1
-                if i > 0 && (newT - allTs[i-1] <= self.minIndexGap) {
-                    print("skipping over new", newT)
-                    continue
-                }
-                // Insert new T
-                print("adding", newT, "from NEW")
-                allTs.append(newT)
-                allZs.append(newZs[newCounter - 1])
-                lastInsertIndex = i
-                if firstInsertIndex == -1 {
-                    firstInsertIndex = i
-                }
-            }
-        }
-        print("first inserted index is", firstInsertIndex)
-        print("last inserted index is", lastInsertIndex)
-        //print(allTs)
-        self.t = allTs
-        self.z = allZs
-        self.b = [Double](repeating: 0.0, count: allTs.count)
-        self.c = [Double](repeating: 0.0, count: allTs.count)
-        self.d = [Double](repeating: 0.0, count: allTs.count)
-        computeCoefficientVals(startI: 0, endI: allTs.count - 1)
-        computeInterpVals(0.0, Double(self.zCalcs.count - 1))
-    }
+
     
     public func computeCoefficientVals(startI: Int, endI: Int) {
         if self.t.count < 2 {
@@ -244,3 +153,96 @@ open class HeatMapSpline {
         return InterpolatedDataPoint(value: z[i] + af * deltaX + cf * pow(deltaX, 2) + df * pow(deltaX, 3), distance: t[i+1]-t[i])
     }
 }
+
+//    public func addPoints(newTs: [Double], newZs: [Double]) {
+//        if newTs.count == 0 {
+//            //print("no new vals, just returning")
+//            return
+//        }
+//        // Case for first time adding values
+//        if self.t.count == 0 {
+//            setPoints(newTs: newTs, newZs: newZs)
+//            return
+//        }
+//        // Add values to t and z in smart way while sorting them and respecting the minIndexGap,
+//        // then maybe need to set vals to nil? Probably not since we will recalculate them
+//        // Will also want to figure out what our range of values to recalculate are
+//        var oldCounter = 0
+//        var newCounter = 0
+//        var firstInsertIndex: Int = -1
+//        var lastInsertIndex: Int = -1
+//
+//        var allTs: [Double] = []
+//        var allZs: [Double] = []
+//        //var allBs: [Double] = []
+//
+//
+//        for i in 0..<(newTs.count + self.t.count) {
+//            // Case for only have old values left
+//            if newCounter == newTs.count {
+//                print("done with new vals, just appending olds")
+//                for j in oldCounter..<self.t.count {
+//                    if self.t[j] - allTs.last! > minIndexGap {
+//                        allTs.append(self.t[j])
+//                        allZs.append(self.z[j])
+//                    }
+//                }
+//                break
+//            }
+//            // Case for only have new values
+//            if oldCounter == self.t.count {
+//                print("done with old vals, just appending news")
+//                for j in newCounter..<newTs.count {
+//                    if newTs[j] - allTs.last! > minIndexGap {
+//                        allTs.append(newTs[j])
+//                        allZs.append(newZs[j])
+//                    }
+//                }
+//                break
+//            }
+//
+//            let oldT = self.t[oldCounter]
+//            let newT = newTs[newCounter]
+//            // Case for using oldT
+//            if oldT < newT {
+//                oldCounter += 1
+//                if i > 0 && (oldT - allTs[i-1] <= self.minIndexGap) {
+//                    print("skipping over old", oldT)
+//                    continue
+//                }
+//                // Insert old T
+//                print("adding", oldT, "from old")
+//                allTs.append(oldT)
+//                allZs.append(self.z[oldCounter - 1])
+//
+//                // TODO: Could maybe copy over old b/c/d values here?
+////                if allNewInserted && lastInsertIndex + 1 < i {
+////
+////                }
+//            } else {
+//                newCounter += 1
+//                if i > 0 && (newT - allTs[i-1] <= self.minIndexGap) {
+//                    print("skipping over new", newT)
+//                    continue
+//                }
+//                // Insert new T
+//                print("adding", newT, "from NEW")
+//                allTs.append(newT)
+//                allZs.append(newZs[newCounter - 1])
+//                lastInsertIndex = i
+//                if firstInsertIndex == -1 {
+//                    firstInsertIndex = i
+//                }
+//            }
+//        }
+//        print("first inserted index is", firstInsertIndex)
+//        print("last inserted index is", lastInsertIndex)
+//        //print(allTs)
+//        self.t = allTs
+//        self.z = allZs
+//        self.b = [Double](repeating: 0.0, count: allTs.count)
+//        self.c = [Double](repeating: 0.0, count: allTs.count)
+//        self.d = [Double](repeating: 0.0, count: allTs.count)
+//        computeCoefficientVals(startI: 0, endI: allTs.count - 1)
+//        computeInterpVals(0.0, Double(self.zCalcs.count - 1))
+//    }
